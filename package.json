@@ -1,0 +1,21 @@
+{
+  "name": "logplan-app",
+  "version": "1.0.0",
+  "description": "Log/Plan — personal weekly planner, hourly log, meals, habits and countdowns",
+  "private": true,
+  "scripts": {
+    "sync": "npx cap sync android",
+    "open:android": "npx cap open android",
+    "build:debug": "cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.1.2",
+    "@capacitor/app": "^6.0.1",
+    "@capacitor/core": "^6.1.2",
+    "@capacitor/status-bar": "^6.0.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.4",
+    "@capacitor/cli": "^6.1.2"
+  }
+}

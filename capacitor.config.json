@@ -1,0 +1,16 @@
+{
+  "appId": "com.hari.logplan",
+  "appName": "Log/Plan",
+  "webDir": "www",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "StatusBar": {
+      "overlaysWebView": false,
+      "style": "DEFAULT",
+      "backgroundColor": "#FAFAF8"
+    }
+  }
+}
