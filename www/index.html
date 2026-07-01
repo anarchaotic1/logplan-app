@@ -45,7 +45,8 @@
 
   .week-strip{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px;}
   .week-strip::-webkit-scrollbar{display:none;}
-  .day-pill{flex:1 1 0;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 9px;border-radius:12px;cursor:pointer;border:none;background:transparent;transition:background 0.25s var(--ease);}
+  .day-pill{flex:1 1 0;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 9px;border-radius:12px;cursor:pointer;border:none;background:transparent;transition:background 0.25s var(--ease), transform 0.15s var(--ease);}
+  .day-pill:active{transform:scale(0.93);}
   .day-pill .dow{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:500;}
   .day-pill .num{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease);}
   .day-pill.today .num{box-shadow:inset 0 0 0 1.5px var(--accent);}
@@ -53,13 +54,31 @@
   .day-pill.active .num{background:var(--accent);color:var(--accent-ink);transform:scale(1.05);}
 
   /* ---------- countdown strip ---------- */
-  .countdown-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px 18px 4px;}
+  .countdown-strip{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding:10px 18px 6px;}
   .countdown-strip::-webkit-scrollbar{display:none;}
-  .cd-chip{flex-shrink:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:7px 10px;display:flex;align-items:center;gap:8px;min-width:auto;transition:background 0.35s var(--ease), border-color 0.35s var(--ease);cursor:pointer;}
-  .cd-chip .cd-text{display:flex;flex-direction:column;gap:1px;}
+  .cd-chip{
+    flex-shrink:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+    padding:9px 12px;display:flex;align-items:center;gap:9px;cursor:pointer;
+    transition:background 0.35s var(--ease), border-color 0.25s var(--ease), transform 0.15s var(--ease);
+    opacity:0;transform:scale(0.9);animation:cdIn 0.3s var(--ease) forwards;
+  }
+  .cd-chip.removing{animation:cdOut 0.16s var(--ease) forwards;}
+  @keyframes cdIn{to{opacity:1;transform:scale(1);}}
+  @keyframes cdOut{to{opacity:0;transform:scale(0.85);}}
+  .cd-chip:active{transform:scale(0.96);}
+  .cd-chip.urgent{border-color:var(--accent);background:var(--accent-soft);}
+  .cd-chip.past{opacity:0.55;}
+  .cd-icon{width:26px;height:26px;border-radius:50%;background:var(--accent-soft);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .cd-chip.urgent .cd-icon{background:var(--accent);}
+  .cd-icon svg{width:13px;height:13px;stroke:var(--accent);}
+  .cd-chip.urgent .cd-icon svg{stroke:var(--accent-ink);}
+  .cd-chip .cd-text{display:flex;flex-direction:column;gap:0;}
   .cd-chip .cd-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
-  .cd-chip .cd-days{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;color:var(--accent);white-space:nowrap;}
-  .cd-chip .cd-del{background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;padding:6px;flex-shrink:0;}
+  .cd-chip .cd-days{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:14.5px;color:var(--ink);white-space:nowrap;}
+  .cd-chip.urgent .cd-days{color:var(--accent);}
+  .cd-chip .cd-del{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px;flex-shrink:0;opacity:0.6;}
+  .cd-add{flex-shrink:0;width:38px;height:38px;border-radius:50%;border:1px dashed var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:17px;display:flex;align-items:center;justify-content:center;align-self:center;transition:border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease);}
+  .cd-add:active{transform:scale(0.9);}
   .cd-add{flex-shrink:0;width:36px;height:36px;border-radius:50%;border:1px dashed var(--line);background:transparent;color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;align-self:center;}
 
   /* ---------- tabs content ---------- */
@@ -67,10 +86,18 @@
   .tab-panel.active{display:block;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
 
-  .priorities{padding:14px 18px 4px;display:flex;gap:8px;flex-wrap:wrap;}
-  .pri-input{flex:1 1 160px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--ink);transition:border-color 0.2s var(--ease), background 0.35s var(--ease);}
-  .pri-input::placeholder{color:var(--muted);}
-  .pri-input:focus{outline:none;border-color:var(--accent);}
+  .priorities{padding:14px 18px 6px;display:flex;flex-direction:column;gap:6px;}
+  .priority-row{display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(4px);animation:rowIn 0.3s var(--ease) forwards;}
+  .priority-row.removing{animation:rowOut 0.18s var(--ease) forwards;}
+  @keyframes rowOut{to{opacity:0;transform:translateY(-4px) scale(0.97);}}
+  .priority-row .p-bullet{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+  .priority-row input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--ink);transition:border-color 0.2s var(--ease), background 0.35s var(--ease);}
+  .priority-row input::placeholder{color:var(--muted);}
+  .priority-row input:focus{outline:none;border-color:var(--accent);}
+  .priority-row .p-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:8px;font-size:13px;flex-shrink:0;}
+  .priority-add-btn{display:flex;align-items:center;gap:6px;color:var(--muted);background:none;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px;cursor:pointer;align-self:flex-start;transition:border-color 0.2s var(--ease), color 0.2s var(--ease);}
+  .priority-add-btn:active{transform:scale(0.97);}
+  .priority-add-btn:hover{border-color:var(--accent);color:var(--accent);}
 
   .carousel-viewport{overflow:hidden;position:relative;touch-action:pan-y;}
   .carousel-track{display:flex;will-change:transform;}
@@ -120,14 +147,22 @@
 
   /* ---------- meals ---------- */
   .section-pad{padding:14px 18px 4px;}
+  .tag-picker{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  .tag-pill{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 13px;font-size:11.5px;color:var(--muted);cursor:pointer;transition:background 0.2s var(--ease), border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease);}
+  .tag-pill:active{transform:scale(0.95);}
+  .tag-pill.selected{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
   .meal-add{display:flex;gap:8px;margin-bottom:12px;}
   .meal-add input[type=time]{width:100px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 8px;font-size:13px;color:var(--ink);}
   .meal-add input[type=text]{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--ink);}
-  .meal-add button{width:40px;border-radius:10px;border:none;background:var(--accent);color:var(--accent-ink);font-size:18px;cursor:pointer;}
-  .meal-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);}
+  .meal-add button{width:40px;border-radius:10px;border:none;background:var(--accent);color:var(--accent-ink);font-size:18px;cursor:pointer;transition:transform 0.15s var(--ease);}
+  .meal-add button:active{transform:scale(0.92);}
+  .meal-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);opacity:0;transform:translateY(4px);animation:rowIn 0.3s var(--ease) forwards;}
+  .meal-item.removing{animation:rowOut 0.18s var(--ease) forwards;}
   .meal-item:first-of-type{border-top:none;}
   .meal-item .m-time{font-family:'Space Grotesk',sans-serif;font-size:12px;color:var(--muted);width:56px;flex-shrink:0;}
-  .meal-item .m-name{flex:1;font-size:13.5px;}
+  .meal-item .m-mid{flex:1;min-width:0;}
+  .meal-item .m-tag{display:inline-block;font-size:9.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:2px 6px;margin-bottom:2px;}
+  .meal-item .m-name{font-size:13.5px;}
   .meal-item .m-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:6px;}
   .empty-hint{color:var(--muted);font-size:12.5px;padding:20px 0;text-align:center;}
 
@@ -165,7 +200,8 @@
     border-top:1px solid var(--line);display:flex;padding:6px 6px calc(env(safe-area-inset-bottom) + 6px);
     transition:background 0.35s var(--ease), border-color 0.35s var(--ease);
   }
-  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;background:none;border:none;cursor:pointer;color:var(--muted);border-radius:12px;transition:color 0.2s var(--ease), background 0.2s var(--ease);}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px;background:none;border:none;cursor:pointer;color:var(--muted);border-radius:12px;transition:color 0.2s var(--ease), background 0.2s var(--ease), transform 0.15s var(--ease);}
+  .nav-item:active{transform:scale(0.92);}
   .nav-item.active{color:var(--accent);background:var(--accent-soft);}
   .nav-item svg{width:19px;height:19px;stroke:currentColor;fill:none;stroke-width:1.8;}
   .nav-item span{font-size:10px;font-weight:500;}
@@ -199,6 +235,12 @@
   <div class="tab-panel" id="tab-meals">
     <div class="section-pad">
       <div class="week-label" id="mealsDayLabel">Meals</div>
+      <div class="tag-picker" id="tagPicker">
+        <button class="tag-pill" data-tag="Breakfast">Breakfast</button>
+        <button class="tag-pill" data-tag="Lunch">Lunch</button>
+        <button class="tag-pill" data-tag="Dinner">Dinner</button>
+        <button class="tag-pill" data-tag="Snack">Snack</button>
+      </div>
       <div class="meal-add">
         <input type="time" id="mealTime" value="12:00">
         <input type="text" id="mealName" placeholder="What did you eat?">
@@ -296,7 +338,7 @@ let activeIdx = new Date().getDay()===0?6:new Date().getDay()-1;
 let weekData = null, dayIsos = [], saveTimer = null;
 let habitsData = null, countdownsData = null;
 
-function emptyDay(){const hours={};for(let h=START_HOUR;h<=END_HOUR;h++)hours[h]={plan:'',log:'',done:false};return {top3:['','',''],hours,meals:[]};}
+function emptyDay(){const hours={};for(let h=START_HOUR;h<=END_HOUR;h++)hours[h]={plan:'',log:'',done:false};return {priorities:[],hours,meals:[]};}
 function emptyWeek(){const days={};for(let i=0;i<7;i++)days[isoDate(addDays(currentMonday,i))]=emptyDay();return {days,reflection:{good:'',drop:''}};}
 
 async function loadWeek(){
@@ -309,10 +351,15 @@ async function loadWeek(){
     const k = isoDate(addDays(currentMonday,i));
     dayIsos.push(k);
     if(!weekData.days[k]) weekData.days[k] = emptyDay();
-    if(!weekData.days[k].top3) weekData.days[k].top3 = ['','',''];
-    if(!weekData.days[k].hours) weekData.days[k].hours = {};
-    if(!weekData.days[k].meals) weekData.days[k].meals = [];
-    for(let h=START_HOUR;h<=END_HOUR;h++) if(!weekData.days[k].hours[h]) weekData.days[k].hours[h] = {plan:'',log:'',done:false};
+    const day = weekData.days[k];
+    if(!day.priorities){
+      if(Array.isArray(day.top3)) day.priorities = day.top3.filter(t=>t&&t.trim()).map(t=>({id:'p'+Date.now()+Math.random().toString(36).slice(2,5), text:t}));
+      else day.priorities = [];
+      delete day.top3;
+    }
+    if(!day.hours) day.hours = {};
+    if(!day.meals) day.meals = [];
+    for(let h=START_HOUR;h<=END_HOUR;h++) if(!day.hours[h]) day.hours[h] = {plan:'',log:'',done:false};
   }
   if(!weekData.reflection) weekData.reflection = {good:'',drop:''};
   renderAll();
@@ -363,10 +410,36 @@ function renderWeekStrip(){
 function renderPriorities(){
   const bar = document.getElementById('prioritiesBar');
   const iso = dayIsos[activeIdx];
-  const top3 = weekData.days[iso].top3;
-  bar.innerHTML = top3.map((v,i)=>`<input class="pri-input" data-idx="${i}" placeholder="Priority ${i+1}" value="${esc(v)}">`).join('');
-  bar.querySelectorAll('.pri-input').forEach(inp=>{
-    inp.addEventListener('input', e=>{ weekData.days[iso].top3[+e.target.dataset.idx] = e.target.value; scheduleSave(); });
+  const priorities = weekData.days[iso].priorities;
+  bar.innerHTML = priorities.map(p => `
+    <div class="priority-row" data-id="${p.id}">
+      <span class="p-bullet"></span>
+      <input placeholder="New priority" data-id="${p.id}" value="${esc(p.text)}">
+      <button class="p-del" data-id="${p.id}">✕</button>
+    </div>`).join('') + `<button class="priority-add-btn" id="addPriorityBtn">+ Add priority</button>`;
+
+  bar.querySelectorAll('.priority-row input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const p = priorities.find(x=>x.id===e.target.dataset.id);
+      if(p){ p.text = e.target.value; scheduleSave(); }
+    });
+  });
+  bar.querySelectorAll('.p-del').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const row = bar.querySelector(`.priority-row[data-id="${btn.dataset.id}"]`);
+      row.classList.add('removing');
+      setTimeout(()=>{
+        weekData.days[iso].priorities = weekData.days[iso].priorities.filter(p=>p.id!==btn.dataset.id);
+        scheduleSave(); renderPriorities();
+      }, 170);
+    });
+  });
+  document.getElementById('addPriorityBtn').addEventListener('click', ()=>{
+    const p = {id:'p'+Date.now()+Math.random().toString(36).slice(2,5), text:''};
+    weekData.days[iso].priorities.push(p);
+    scheduleSave(); renderPriorities();
+    const newInput = bar.querySelector(`.priority-row[data-id="${p.id}"] input`);
+    if(newInput) newInput.focus();
   });
 }
 function hourRowsHTML(iso){
@@ -458,6 +531,26 @@ function renderGrid(){
 
 /* ===================== meals ===================== */
 let editingMealId = null;
+let selectedTag = 'Lunch';
+function defaultTagForTime(t){
+  const h = parseInt(t.split(':')[0],10);
+  if(h < 11) return 'Breakfast';
+  if(h < 16) return 'Lunch';
+  if(h < 21) return 'Dinner';
+  return 'Snack';
+}
+function setSelectedTag(tag){
+  selectedTag = tag;
+  document.querySelectorAll('.tag-pill').forEach(p=>p.classList.toggle('selected', p.dataset.tag===tag));
+}
+document.querySelectorAll('.tag-pill').forEach(p=>{
+  p.addEventListener('click', ()=>setSelectedTag(p.dataset.tag));
+});
+document.getElementById('mealTime').addEventListener('change', e=>{
+  if(!editingMealId) setSelectedTag(defaultTagForTime(e.target.value));
+});
+setSelectedTag(defaultTagForTime(document.getElementById('mealTime').value));
+
 function renderMeals(){
   const iso = dayIsos[activeIdx];
   const d = addDays(currentMonday, activeIdx);
@@ -466,9 +559,9 @@ function renderMeals(){
   const meals = weekData.days[iso].meals.slice().sort((a,b)=>a.time.localeCompare(b.time));
   if(meals.length===0){ list.innerHTML = `<div class="empty-hint">No meals logged for this day yet.</div>`; return; }
   list.innerHTML = meals.map((m)=>`
-    <div class="meal-item">
+    <div class="meal-item" data-row="${m.id}">
       <div class="m-time" data-edit="${m.id}">${fmtTime12(m.time)}</div>
-      <div class="m-name" data-edit="${m.id}">${esc(m.name)}</div>
+      <div class="m-mid" data-edit="${m.id}"><span class="m-tag">${esc(m.tag||'Meal')}</span><div class="m-name">${esc(m.name)}</div></div>
       <button class="m-del" data-id="${m.id}">✕</button>
     </div>`).join('');
   list.querySelectorAll('[data-edit]').forEach(el=>{
@@ -478,9 +571,13 @@ function renderMeals(){
     b.addEventListener('click', e=>{
       e.stopPropagation();
       if(!confirm('Delete this entry?')) return;
-      weekData.days[iso].meals = weekData.days[iso].meals.filter(m=>m.id!==b.dataset.id);
-      if(editingMealId===b.dataset.id) cancelMealEdit();
-      scheduleSave(); renderMeals();
+      const row = list.querySelector(`[data-row="${b.dataset.id}"]`);
+      row.classList.add('removing');
+      setTimeout(()=>{
+        weekData.days[iso].meals = weekData.days[iso].meals.filter(m=>m.id!==b.dataset.id);
+        if(editingMealId===b.dataset.id) cancelMealEdit();
+        scheduleSave(); renderMeals();
+      }, 170);
     });
   });
 }
@@ -491,6 +588,7 @@ function startEditMeal(id){
   editingMealId = id;
   document.getElementById('mealTime').value = m.time;
   document.getElementById('mealName').value = m.name;
+  setSelectedTag(m.tag || 'Lunch');
   document.getElementById('mealAddBtn').textContent = '✓';
   document.getElementById('mealEditHint').style.display = 'block';
   document.getElementById('mealName').focus();
@@ -499,6 +597,7 @@ function cancelMealEdit(){
   editingMealId = null;
   document.getElementById('mealTime').value = '12:00';
   document.getElementById('mealName').value = '';
+  setSelectedTag(defaultTagForTime('12:00'));
   document.getElementById('mealAddBtn').textContent = '+';
   document.getElementById('mealEditHint').style.display = 'none';
 }
@@ -513,10 +612,10 @@ document.getElementById('mealAddBtn').addEventListener('click', ()=>{
   if(clash && !confirm(`You already logged "${clash.name}" at this time. Add anyway?`)) return;
   if(editingMealId){
     const m = weekData.days[iso].meals.find(x=>x.id===editingMealId);
-    if(m){ m.time = time; m.name = name; }
+    if(m){ m.time = time; m.name = name; m.tag = selectedTag; }
     cancelMealEdit();
   } else {
-    weekData.days[iso].meals.push({id: Date.now()+'-'+Math.random().toString(36).slice(2,6), time, name});
+    weekData.days[iso].meals.push({id: Date.now()+'-'+Math.random().toString(36).slice(2,6), time, name, tag: selectedTag});
     document.getElementById('mealName').value = '';
   }
   scheduleSave(); renderMeals();
@@ -612,8 +711,11 @@ function renderCountdowns(){
   strip.innerHTML = countdownsData.map(c=>{
     const target = new Date(c.date+'T00:00:00');
     const n = daysBetween(today, target);
-    const txt = n>0 ? `${n}d` : n===0 ? 'today' : `${Math.abs(n)}d ago`;
-    return `<div class="cd-chip" data-id="${c.id}">
+    const txt = n>0 ? `${n} day${n===1?'':'s'}` : n===0 ? 'Today' : `${Math.abs(n)}d ago`;
+    const urgent = n>=0 && n<=7;
+    const past = n<0;
+    return `<div class="cd-chip${urgent?' urgent':''}${past?' past':''}" data-id="${c.id}">
+      <div class="cd-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div>
       <div class="cd-text" data-edit="${c.id}"><span class="cd-label">${esc(c.label)}</span><span class="cd-days">${txt}</span></div>
       <button class="cd-del" data-del="${c.id}">✕</button>
     </div>`;
@@ -627,8 +729,12 @@ function renderCountdowns(){
       e.stopPropagation();
       const c = countdownsData.find(x=>x.id===btn.dataset.del);
       if(c && confirm(`Delete "${c.label}"?`)){
-        countdownsData = countdownsData.filter(x=>x.id!==btn.dataset.del);
-        saveCountdowns(); renderCountdowns();
+        const chip = strip.querySelector(`.cd-chip[data-id="${btn.dataset.del}"]`);
+        chip.classList.add('removing');
+        setTimeout(()=>{
+          countdownsData = countdownsData.filter(x=>x.id!==btn.dataset.del);
+          saveCountdowns(); renderCountdowns();
+        }, 150);
       }
     });
   });
@@ -661,10 +767,10 @@ function renderWeekTab(){
   document.getElementById('reflectDrop').value = weekData.reflection.drop || '';
   const recap = document.getElementById('recapList');
   recap.innerHTML = dayIsos.map((iso,i)=>{
-    const t3 = weekData.days[iso].top3.filter(Boolean);
-    if(t3.length===0) return '';
+    const texts = weekData.days[iso].priorities.map(p=>p.text).filter(Boolean);
+    if(texts.length===0) return '';
     const d = addDays(currentMonday,i);
-    return `<li><div class="rd">${DOW[i]} ${d.getDate()}</div>${esc(t3.join(' · '))}</li>`;
+    return `<li><div class="rd">${DOW[i]} ${d.getDate()}</div>${esc(texts.join(' · '))}</li>`;
   }).join('') || `<li class="empty-hint" style="border:none;">Nothing logged yet this week.</li>`;
 }
 document.getElementById('reflectGood').addEventListener('input', e=>{ weekData.reflection.good = e.target.value; scheduleSave(); });
