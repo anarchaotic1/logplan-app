@@ -287,6 +287,38 @@
   .orbit-cal-btn{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:11.5px;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px;}
   .orbit-cal-btn svg{width:13px;height:13px;stroke:var(--muted);}
   .orbit-cal-btn input[type=date]{position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;}
+
+  /* orbit scrub */
+  .orbit-stage{touch-action:none;}
+  #orbitRot{transform-origin:220px 220px;will-change:transform;}
+  .onotch{fill:var(--accent);}
+
+  /* notice strips */
+  .notice{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--accent-soft);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:12px;margin:10px 18px 0;animation:rowIn 0.3s var(--ease);}
+  .notice .n-actions{display:flex;gap:6px;flex-shrink:0;}
+  .notice button{border:none;background:var(--accent);color:var(--accent-ink);border-radius:8px;padding:6px 11px;font-size:11.5px;cursor:pointer;transition:transform 0.15s var(--ease);}
+  .notice button:active{transform:scale(0.94);}
+  .notice button.ghost{background:transparent;color:var(--muted);}
+
+  /* priority done + bell */
+  .p-done{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;cursor:pointer;position:relative;transition:background 0.2s var(--ease), border-color 0.2s var(--ease);}
+  .p-done::before{content:'';position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);}
+  .p-done.on{background:var(--accent);border-color:var(--accent);}
+  .p-done.on::after{content:'';position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid var(--accent-ink);border-width:0 1.6px 1.6px 0;transform:rotate(40deg);animation:pop 0.25s var(--ease);}
+  .priority-row input.p-struck{text-decoration:line-through;color:var(--muted);}
+  .p-bell{padding:8px 4px;}
+  .p-bell .bt{font-size:8.5px;display:block;text-align:center;margin-top:1px;font-family:'Space Grotesk',sans-serif;}
+
+  /* adherence trend */
+  .trend{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px 8px;margin:-6px 0 16px;}
+  .tr-svg{width:100%;height:auto;display:block;}
+  .tr-line{fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;transition:stroke-dashoffset 1s var(--ease);}
+  .tr-dot{fill:var(--muted);opacity:0.55;}
+  .tr-dot.cur{fill:var(--accent);opacity:1;}
+  .tr-cap{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;text-align:right;margin-top:4px;}
+
+  /* diagnostics */
+  .diag-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);margin-top:10px;flex-wrap:wrap;}
 </style>
 </head>
 <body>
@@ -314,6 +346,7 @@
   <div class="countdown-strip" id="countdownStrip"></div>
 
   <div class="tab-panel active" id="tab-today">
+    <div id="noticeBar"></div>
     <div class="priorities" id="prioritiesBar"></div>
     <div class="swipe-nav">
       <button class="nav-btn" id="prevBtn" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
@@ -363,6 +396,7 @@
         </div>
         <div class="adh-days" id="adhDays"></div>
       </div>
+      <div class="trend" id="trendBox"></div>
       <div class="reflect-block"><label>What moved the needle</label><textarea id="reflectGood" placeholder="…"></textarea></div>
       <div class="reflect-block"><label>What to drop next week</label><textarea id="reflectDrop" placeholder="…"></textarea></div>
       <div class="reflect-block"><label>Priorities recap</label><ul class="recap-list" id="recapList"></ul></div>
@@ -373,6 +407,7 @@
           <input type="file" id="importFile" accept=".json,application/json" style="display:none">
         </div>
         <div class="data-note" id="dataNote"></div>
+        <div class="diag-row" id="diagBox"></div>
       </div>
     </div>
   </div>
@@ -381,7 +416,10 @@
     <button class="orbit-close" id="orbitClose">✕</button>
     <div class="orbit-stage">
       <svg class="orbit-svg" viewBox="0 0 440 440">
-        <g id="orbitG" transform="rotate(-18 220 220)"></g>
+        <g id="orbitG" transform="rotate(-18 220 220)">
+          <g id="orbitRot"></g>
+          <path class="onotch" d="M220 88 L215.5 99 L224.5 99 Z"/>
+        </g>
       </svg>
       <div class="orbit-core">
         <div class="orbit-year-row">
@@ -389,7 +427,7 @@
           <div class="orbit-year" id="orbitYearLbl">—</div>
           <button class="oy-arrow" id="oyNext"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
         </div>
-        <div class="orbit-hint">tap a week</div>
+        <div class="orbit-hint" id="orbitHint">scroll or tap a week</div>
       </div>
     </div>
     <div class="orbit-foot">
@@ -535,7 +573,7 @@ function renderWeekHeader(){
 }
 
 /* ============ render ============ */
-function renderAll(){renderWeekHeader();renderWeekStrip();renderPriorities();renderCarousel();renderGrid();renderCountdowns();
+function renderAll(){renderWeekHeader();renderWeekStrip();renderPriorities();renderCarousel();renderGrid();renderCountdowns();updateNotices();
   if(document.getElementById('tab-meals').classList.contains('active'))renderMeals();
   if(document.getElementById('tab-week').classList.contains('active'))renderWeekTab();
 }
@@ -558,18 +596,45 @@ function renderPriorities(){
   const ps=weekData.days[iso].priorities;
   bar.innerHTML=ps.map(p=>`
     <div class="priority-row" data-id="${p.id}">
-      <span class="p-bullet"></span>
-      <input placeholder="New priority" data-id="${p.id}" value="${esc(p.text)}">
+      <div class="p-done${p.done?' on':''}" data-done="${p.id}"></div>
+      <input placeholder="New priority" data-id="${p.id}" class="${p.done?'p-struck':''}" value="${esc(p.text)}">
+      <button class="bell-btn p-bell${p.remind?' on':''}" data-pbell="${p.id}">${BELL_SVG}${p.remind?`<span class="bt">${p.remind.time}</span>`:''}</button>
       <button class="p-del" data-id="${p.id}">✕</button>
     </div>`).join('')+`<button class="priority-add-btn" id="addPriorityBtn">+ Add priority</button>`;
-  bar.oninput=e=>{const p=ps.find(x=>x.id===e.target.dataset.id);if(p){p.text=e.target.value;scheduleSave();}};
-  bar.onclick=e=>{
+  bar.oninput=e=>{const p=ps.find(x=>x.id===e.target.dataset.id);if(p){p.text=e.target.value;scheduleSave();if(p.remind)scheduleNotifSync();}};
+  bar.onclick=async e=>{
+    const done=e.target.closest('.p-done');
+    if(done){
+      const p=ps.find(x=>x.id===done.dataset.done);
+      p.done=!p.done;haptic('LIGHT');
+      scheduleSave();renderPriorities();scheduleNotifSync();
+      return;
+    }
+    const bell=e.target.closest('[data-pbell]');
+    if(bell){
+      const p=ps.find(x=>x.id===bell.dataset.pbell);
+      if(p.remind){
+        if(confirm(`Remove the ${p.remind.time} reminder for this priority?`)){p.remind=null;scheduleSave();renderPriorities();scheduleNotifSync();}
+        return;
+      }
+      if(!p.text||!p.text.trim()){alert('Write the priority first, then set its reminder.');return;}
+      if(!await ensureNotifPerm())return;
+      const t=prompt(`Remind at what time on ${iso}? (24h HH:MM)`,'09:00');
+      if(!t)return;
+      if(!/^([01]?\d|2[0-3]):[0-5]\d$/.test(t)){alert('Use HH:MM, e.g. 09:00 or 18:30.');return;}
+      const [hh,mm]=t.split(':').map(Number);
+      const fire=new Date(iso+'T00:00:00');fire.setHours(hh,mm,0,0);
+      if(fire<=new Date()){alert('That time has already passed for this day.');return;}
+      p.remind={time:t};haptic('LIGHT');
+      scheduleSave();renderPriorities();scheduleNotifSync();
+      return;
+    }
     if(e.target.classList.contains('p-del')){
       const row=bar.querySelector(`.priority-row[data-id="${e.target.dataset.id}"]`);
       row.classList.add('removing');haptic('MEDIUM');
-      setTimeout(()=>{weekData.days[iso].priorities=weekData.days[iso].priorities.filter(p=>p.id!==e.target.dataset.id);scheduleSave();renderPriorities();},170);
+      setTimeout(()=>{weekData.days[iso].priorities=weekData.days[iso].priorities.filter(p=>p.id!==e.target.dataset.id);scheduleSave();renderPriorities();scheduleNotifSync();},170);
     } else if(e.target.id==='addPriorityBtn'||e.target.closest('#addPriorityBtn')){
-      const p={id:'p'+Date.now()+Math.random().toString(36).slice(2,5),text:''};
+      const p={id:'p'+Date.now()+Math.random().toString(36).slice(2,5),text:'',done:false};
       weekData.days[iso].priorities.push(p);scheduleSave();renderPriorities();
       const inp=bar.querySelector(`.priority-row[data-id="${p.id}"] input`);if(inp)inp.focus();
     }
@@ -683,13 +748,13 @@ function attachDrag(){
     if(dragDelta<-60&&activeIdx<6)activeIdx++;
     else if(dragDelta>60&&activeIdx>0)activeIdx--;
     dragStartX=null;dragDelta=0;positionTrack(true);
-    renderWeekStrip();renderPriorities();
+    renderWeekStrip();renderPriorities();updateNotices();
     if(document.getElementById('tab-meals').classList.contains('active'))renderMeals();
   };
   vp.onpointerup=end;vp.onpointercancel=end;
 }
 function goToDay(i){
-  activeIdx=i;positionTrack(true);renderWeekStrip();renderPriorities();
+  activeIdx=i;positionTrack(true);renderWeekStrip();renderPriorities();updateNotices();
   if(document.getElementById('tab-meals').classList.contains('active'))renderMeals();
 }
 document.getElementById('prevBtn').addEventListener('click',()=>{if(activeIdx>0)goToDay(activeIdx-1);});
@@ -949,6 +1014,7 @@ function renderWeekTab(){
     const d=addDays(currentMonday,i);
     return `<li><div class="rd">${DOW[i]} ${d.getDate()}</div>${esc(texts.join(' · '))}</li>`;
   }).join('')||`<li class="empty-hint" style="border:none;">Nothing logged yet this week.</li>`;
+  renderTrend();renderDiag();
 }
 document.getElementById('reflectGood').addEventListener('input',e=>{weekData.reflection.good=e.target.value;scheduleSave();});
 document.getElementById('reflectDrop').addEventListener('input',e=>{weekData.reflection.drop=e.target.value;scheduleSave();});
@@ -1047,7 +1113,7 @@ async function syncNotifications(){
           if(doneToday||fire<=now)continue;
         }
         const fire=new Date(d);fire.setHours(hh,mm,0,0);
-        toSchedule.push({id:nid(`habit:${h.id}:${iso}`),title:h.name,body:`Time for ${h.name} — keep the streak alive.`,schedule:{at:fire}});
+        toSchedule.push({id:nid(`habit:${h.id}:${iso}`),title:h.name,body:`Time for ${h.name} — keep the streak alive.`,schedule:{at:fire,allowWhileIdle:true}});
       }
     }
     /* plan reminders: scan all stored weeks for future remind flags */
@@ -1064,7 +1130,14 @@ async function syncNotifications(){
           fire.setHours(+h%24);if(+h===24)fire.setDate(fire.getDate()+1);
           fire.setMinutes(fire.getMinutes()-(cell.remind.lead||0));
           if(fire<=now)continue;
-          toSchedule.push({id:nid(`plan:${iso}:${h}`),title:`Plan · ${fmtHour(+h)}`,body:cell.plan?cell.plan.slice(0,120):'Upcoming planned block.',schedule:{at:fire}});
+          toSchedule.push({id:nid(`plan:${iso}:${h}`),title:`Plan · ${fmtHour(+h)}`,body:cell.plan?cell.plan.slice(0,120):'Upcoming planned block.',schedule:{at:fire,allowWhileIdle:true}});
+        }
+        if(Array.isArray(day.priorities))for(const p of day.priorities){
+          if(!p.remind||p.done||!p.text||!p.text.trim())continue;
+          const [hh,mm]=p.remind.time.split(':').map(Number);
+          const fire=new Date(`${iso}T00:00:00`);fire.setHours(hh,mm,0,0);
+          if(fire<=now)continue;
+          toSchedule.push({id:nid(`prio:${iso}:${p.id}`),title:'Priority',body:p.text.slice(0,120),schedule:{at:fire,allowWhileIdle:true}});
         }
       }
     }
@@ -1086,6 +1159,7 @@ document.getElementById('exportBtn').addEventListener('click',async()=>{
         const res=await p.Filesystem.writeFile({path:fname,data:payload,directory:'DOCUMENTS',encoding:'utf8'});
         haptic('LIGHT');
         if(p.Share){try{await p.Share.share({title:fname,url:res.uri});}catch(e){}}
+        storage.set('app-last-backup',new Date().toISOString()).catch(()=>{});
         dataNote(`Saved: Documents/${fname} (${keys.length} records)`);return;
       }catch(e){/* fall through to browser download */}
     }
@@ -1093,6 +1167,7 @@ document.getElementById('exportBtn').addEventListener('click',async()=>{
     a.href=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
     a.download=fname;a.click();
     setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    storage.set('app-last-backup',new Date().toISOString()).catch(()=>{});
     dataNote(`Backup downloaded (${keys.length} records).`);
   }catch(e){dataNote('Export failed: '+e.message);}
 });
@@ -1132,6 +1207,7 @@ setInterval(updateNowLine,60000);
 
 /* ============ year orbit ============ */
 let orbitYear=null, storedWeekSet=null;
+let oRot=0, oStep=0, oTotal=52, oSel=0, oDrag=null, oSettleT=null, oHoldT=null;
 function weeksInISOYear(y){return isoWeekNum(new Date(y,11,28)).week;}
 function firstISOMonday(y){return getMonday(new Date(y,0,4));}
 async function openOrbit(){
@@ -1144,17 +1220,50 @@ async function openOrbit(){
   document.getElementById('orbitOverlay').classList.add('open');
   renderOrbit();
 }
-function closeOrbit(){document.getElementById('orbitOverlay').classList.remove('open');}
+function clearOrbitTimers(){clearTimeout(oSettleT);clearTimeout(oHoldT);oSettleT=null;oHoldT=null;}
+function closeOrbit(){clearOrbitTimers();oDrag=null;document.getElementById('orbitOverlay').classList.remove('open');}
+function setORot(a,animate){
+  const g=document.getElementById('orbitRot');
+  g.style.transition=animate?'transform 0.28s var(--ease)':'none';
+  g.style.transform=`rotate(${a}deg)`;
+}
+function oSelFromRot(){return ((Math.round(-oRot/oStep))%oTotal+oTotal)%oTotal;}
+function oWeekMonday(i){return addDays(firstISOMonday(orbitYear),i*7);}
+function updateScrubLabel(){
+  const mon=oWeekMonday(oSel),sun=addDays(mon,6),o={month:'short',day:'numeric'};
+  document.getElementById('orbitYearLbl').textContent=`W${oSel+1}`;
+  document.getElementById('orbitHint').textContent=`${mon.toLocaleDateString('en-US',o)} – ${sun.toLocaleDateString('en-US',o)}`;
+}
+function resetOrbitLabel(){
+  document.getElementById('orbitYearLbl').textContent=orbitYear;
+  document.getElementById('orbitHint').textContent='scroll or tap a week';
+}
+function orbitJump(monday){
+  haptic('MEDIUM');
+  currentMonday=getMonday(monday);
+  activeIdx=weekContainsToday()?todayIdx():0;
+  closeOrbit();
+  loadWeek();
+}
+function oSettle(){
+  oRot=Math.round(oRot/oStep)*oStep;
+  setORot(oRot,true);
+  oSel=oSelFromRot();
+  updateScrubLabel();
+  oHoldT=setTimeout(()=>orbitJump(oWeekMonday(oSel)),600);
+}
 function renderOrbit(){
-  const total=weeksInISOYear(orbitYear);
+  clearOrbitTimers();
+  oTotal=weeksInISOYear(orbitYear);
+  oStep=360/oTotal;
   const start=firstISOMonday(orbitYear);
   const cur=isoWeekNum(getMonday(new Date()));
   const view=isoWeekNum(currentMonday);
   const thisMonday=getMonday(new Date());
   const cx=220,cy=220,rx=178,ry=112;
   let dots='',labels='';
-  for(let i=0;i<total;i++){
-    const t=-Math.PI/2 + (i/total)*2*Math.PI;
+  for(let i=0;i<oTotal;i++){
+    const t=-Math.PI/2 + (i/oTotal)*2*Math.PI;
     const x=(cx+rx*Math.cos(t)).toFixed(1), y=(cy+ry*Math.sin(t)).toFixed(1);
     const mon=addDays(start,i*7), iso=isoDate(mon);
     const isCur=(cur.year===orbitYear&&cur.week===i+1);
@@ -1167,22 +1276,64 @@ function renderOrbit(){
       ${isView?`<circle class="viewring" cx="${x}" cy="${y}" r="10"/>`:''}
     </g>`;
   }
-  const MONS=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const MONS=['J','F','M','A','M','J','J','A','S','O','N','D'];
   for(let m=0;m<12;m++){
     const w=isoWeekNum(getMonday(new Date(orbitYear,m,4)));
     if(w.year!==orbitYear)continue;
-    const t=-Math.PI/2 + ((w.week-1)/total)*2*Math.PI;
-    const lx=(220+(rx+22)*Math.cos(t)).toFixed(1), ly=(220+(ry+22)*Math.sin(t)).toFixed(1);
-    labels+=`<text class="olab" x="${lx}" y="${ly}" transform="rotate(18 ${lx} ${ly})">${MONS[m][0]}</text>`;
+    const t=-Math.PI/2 + ((w.week-1)/oTotal)*2*Math.PI;
+    const lx=(cx+(rx+22)*Math.cos(t)).toFixed(1), ly=(cy+(ry+22)*Math.sin(t)).toFixed(1);
+    labels+=`<text class="olab" x="${lx}" y="${ly}" transform="rotate(18 ${lx} ${ly})">${MONS[m]}</text>`;
   }
-  const g=document.getElementById('orbitG');
+  const g=document.getElementById('orbitRot');
   g.innerHTML=`<ellipse class="opath" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>${labels}${dots}`;
-  document.getElementById('orbitYearLbl').textContent=orbitYear;
+  oSel=(view.year===orbitYear)?view.week-1:0;
+  oRot=-oSel*oStep;
+  setORot(oRot,false);
+  resetOrbitLabel();
   const p=g.querySelector('.opath');
   const len=p.getTotalLength();
   p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.strokeDashoffset=0;}));
 }
+/* scrub input: drag (touch) + wheel */
+(function(){
+  const stage=document.querySelector('.orbit-stage');
+  stage.addEventListener('pointerdown',e=>{
+    if(e.target.closest('.oy-arrow'))return;
+    clearOrbitTimers();
+    oDrag={y:e.clientY,rot:oRot,moved:false,pid:e.pointerId};
+  });
+  stage.addEventListener('pointermove',e=>{
+    if(!oDrag)return;
+    const dy=e.clientY-oDrag.y;
+    if(!oDrag.moved){
+      if(Math.abs(dy)<8)return;
+      oDrag.moved=true;
+      try{stage.setPointerCapture(oDrag.pid);}catch(err){}
+    }
+    oRot=oDrag.rot+dy*(oStep/30); /* ~30px per week */
+    setORot(oRot,false);
+    const s=oSelFromRot();
+    if(s!==oSel){oSel=s;haptic('LIGHT');updateScrubLabel();}
+  });
+  const endDrag=()=>{
+    if(!oDrag)return;
+    const moved=oDrag.moved;oDrag=null;
+    if(moved)oSettle();
+  };
+  stage.addEventListener('pointerup',endDrag);
+  stage.addEventListener('pointercancel',endDrag);
+  document.getElementById('orbitOverlay').addEventListener('wheel',e=>{
+    e.preventDefault();
+    clearOrbitTimers();
+    oRot+=(e.deltaY>0?-1:1)*oStep;
+    setORot(oRot,true);
+    const s=oSelFromRot();
+    if(s!==oSel){oSel=s;haptic('LIGHT');}
+    updateScrubLabel();
+    oSettleT=setTimeout(oSettle,320);
+  },{passive:false});
+})();
 document.getElementById('wkCenter').addEventListener('click',openOrbit);
 document.getElementById('orbitClose').addEventListener('click',closeOrbit);
 document.getElementById('orbitOverlay').addEventListener('click',e=>{if(e.target.id==='orbitOverlay')closeOrbit();});
@@ -1191,12 +1342,104 @@ document.getElementById('oyNext').addEventListener('click',()=>{orbitYear++;hapt
 document.getElementById('orbitG').parentElement.addEventListener('click',e=>{
   const hit=e.target.closest('.hit');
   if(!hit)return;
-  haptic('LIGHT');
-  currentMonday=getMonday(new Date(hit.dataset.iso+'T00:00:00'));
-  activeIdx=weekContainsToday()?todayIdx():0;
-  closeOrbit();
-  loadWeek();
+  clearOrbitTimers();
+  orbitJump(new Date(hit.dataset.iso+'T00:00:00'));
 });
+
+/* ============ notices: carry-over + backup nudge ============ */
+async function updateNotices(){
+  const bar=document.getElementById('noticeBar');
+  bar.innerHTML='';
+  const today=new Date(), todayIso=isoDate(today);
+  if(dayIsos[activeIdx]===todayIso){
+    try{
+      const dis=await storage.get('app-carry-dismiss');
+      if(!(dis&&dis.value===todayIso)){
+        const yDate=addDays(today,-1), yIso=isoDate(yDate);
+        let ypris=null;
+        if(weekData.days[yIso])ypris=weekData.days[yIso].priorities;
+        else{
+          const r=await storage.get(weekKey(getMonday(yDate)));
+          if(r){const wd=JSON.parse(r.value);ypris=wd.days&&wd.days[yIso]?wd.days[yIso].priorities:null;}
+        }
+        const unfinished=(ypris||[]).filter(p=>p.text&&p.text.trim()&&!p.done);
+        if(unfinished.length){
+          bar.insertAdjacentHTML('beforeend',`<div class="notice"><span>${unfinished.length} unfinished from yesterday</span><span class="n-actions"><button id="carryBtn">Carry over</button><button id="carryDismiss" class="ghost">Dismiss</button></span></div>`);
+          document.getElementById('carryBtn').onclick=()=>{
+            const t=weekData.days[todayIso];
+            unfinished.forEach(p=>t.priorities.push({id:'p'+Date.now()+Math.random().toString(36).slice(2,5),text:p.text,done:false}));
+            storage.set('app-carry-dismiss',todayIso).catch(()=>{});
+            haptic('LIGHT');scheduleSave();renderPriorities();updateNotices();
+          };
+          document.getElementById('carryDismiss').onclick=()=>{storage.set('app-carry-dismiss',todayIso).catch(()=>{});updateNotices();};
+        }
+      }
+    }catch(e){}
+  }
+  try{
+    const lb=await storage.get('app-last-backup');
+    const sn=await storage.get('app-backup-snooze');
+    const last=lb?new Date(lb.value):null;
+    const snoozed=sn&&daysBetween(new Date(sn.value+'T00:00:00'),today)<3;
+    const due=!last||daysBetween(last,today)>=14;
+    if(due&&!snoozed){
+      const ks=await storage.keys('app-week:');
+      if(ks.length>=2){
+        bar.insertAdjacentHTML('beforeend',`<div class="notice"><span>${last?`Last backup ${daysBetween(last,today)}d ago`:'No backup yet — data is on this phone only'}</span><span class="n-actions"><button id="nudgeExport">Export</button><button id="nudgeSnooze" class="ghost">Later</button></span></div>`);
+        document.getElementById('nudgeExport').onclick=()=>{switchTab('week');document.getElementById('exportBtn').click();};
+        document.getElementById('nudgeSnooze').onclick=()=>{storage.set('app-backup-snooze',isoDate(today)).catch(()=>{});updateNotices();};
+      }
+    }
+  }catch(e){}
+}
+
+/* ============ adherence trend ============ */
+async function renderTrend(){
+  const box=document.getElementById('trendBox');
+  const pts=[];
+  for(let k=9;k>=0;k--){
+    const mon=addDays(currentMonday,-7*k);
+    let wd=null;
+    if(isoDate(mon)===isoDate(currentMonday))wd=weekData;
+    else{try{const r=await storage.get(weekKey(mon));if(r)wd=JSON.parse(r.value);}catch(e){}}
+    let p=0,c=0;
+    if(wd&&wd.days)for(const iso in wd.days){const hrs=wd.days[iso].hours||{};for(const h in hrs){if(hrs[h].plan&&hrs[h].plan.trim()){p++;if(hrs[h].done)c++;}}}
+    pts.push(p?Math.round(c/p*100):null);
+  }
+  if(pts.every(v=>v===null)){box.innerHTML='<div class="empty-hint" style="padding:6px 0;">Adherence trend appears once you have planned weeks.</div>';return;}
+  const W=260,H=54,step=W/9;
+  let path='',dots='',started=false;
+  pts.forEach((v,i)=>{
+    if(v===null)return;
+    const x=(i*step).toFixed(1),y=(H-6-(v/100)*(H-14)).toFixed(1);
+    path+=(started?` L${x} ${y}`:`M${x} ${y}`);started=true;
+    dots+=`<circle cx="${x}" cy="${y}" r="${i===9?3.4:2.2}" class="tr-dot${i===9?' cur':''}"/>`;
+  });
+  box.innerHTML=`<svg viewBox="-5 0 ${W+10} ${H}" class="tr-svg"><path class="tr-line" d="${path}"/>${dots}</svg><div class="tr-cap">adherence · last 10 weeks</div>`;
+  const line=box.querySelector('.tr-line');
+  const len=line.getTotalLength();
+  line.style.strokeDasharray=len;line.style.strokeDashoffset=len;
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{line.style.strokeDashoffset=0;}));
+}
+
+/* ============ notification diagnostics ============ */
+async function renderDiag(){
+  const el=document.getElementById('diagBox');
+  const l=LN();
+  if(!l){el.innerHTML='<span>Notifications: browser preview — works in the installed app.</span>';return;}
+  let perm='unknown',pend='?';
+  try{perm=(await l.checkPermissions()).display;}catch(e){}
+  try{pend=((await l.getPending()).notifications||[]).length;}catch(e){}
+  el.innerHTML=`<span>Notifications: plugin ✓ · permission ${perm} · ${pend} pending</span><button class="data-btn" id="diagTest" style="flex:0 0 auto;padding:7px 12px;">Test 10s</button>`;
+  document.getElementById('diagTest').onclick=async()=>{
+    if(!await ensureNotifPerm())return;
+    try{
+      await l.schedule({notifications:[{id:nid('diag:'+Date.now()),title:'Log/Plan test',body:'Notifications are working.',schedule:{at:new Date(Date.now()+10000),allowWhileIdle:true}}]});
+      dataNote('Test scheduled — lock the screen, wait ~10s.');
+    }catch(e){dataNote('Schedule failed: '+e.message);}
+    setTimeout(renderDiag,600);
+  };
+}
 
 /* ============ Android back button ============ */
 function currentActiveTab(){const el=document.querySelector('.tab-panel.active');return el?el.id.replace('tab-',''):'today';}
