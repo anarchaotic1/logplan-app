@@ -20,32 +20,6 @@
     --accent:#8B8FFF;--accent-soft:#1D1E3A;--accent-ink:#0E0F12;
     --flame:#F0A264;--flame-soft:#2B1F16;
   }
-  
-  /* --- Theme Overlay --- */
-  .theme-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 9999; clip-path: circle(0% at 50% 50%);
-    transition: clip-path 0.4s ease-out; pointer-events: none;
-  }
-  .theme-overlay.expand { clip-path: circle(150% at 50% 50%); }
-
-  /* --- Global Custom Modal --- */
-  .modal-overlay {
-    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.5); display: flex;
-    align-items: center; justify-content: center; z-index: 10000;
-    opacity: 1; transition: opacity 0.2s ease;
-  }
-  .modal-overlay.hidden { opacity: 0; pointer-events: none; }
-  .modal-content {
-    background: var(--surface); padding: 24px; border-radius: 16px;
-    max-width: 360px; width: 85%; text-align: center; border: 1px solid var(--line);
-  }
-  .modal-actions { display: flex; justify-content: space-between; margin-top: 24px; gap: 12px; }
-  .btn-danger { flex:1; background: var(--flame); color: white; border: none; padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: transform 0.15s; }
-  .btn-danger:active { transform: scale(0.95); }
-  .btn-secondary { flex:1; background: var(--surface); color: var(--ink); border: 1px solid var(--line); padding: 12px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: transform 0.15s; }
-  .btn-secondary:active { transform: scale(0.95); }
 
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;touch-action:manipulation;}
   @media (prefers-reduced-motion: reduce){*{animation-duration:0.01ms !important;transition-duration:0.01ms !important;}}
@@ -90,8 +64,7 @@
   .day-pill{flex:1 1 0;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 9px;border-radius:12px;cursor:pointer;border:none;background:transparent;transition:background 0.25s var(--ease), transform 0.15s var(--ease);}
   .day-pill:active{transform:scale(0.93);}
   .day-pill .dow{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;font-weight:500;}
-  /* Contrast Fix Here */
-  .day-pill .num{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease); color: inherit;}
+  .day-pill .num{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;color:var(--ink);width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;transition:background 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease);}
   .day-pill.today .num{box-shadow:inset 0 0 0 1.5px var(--accent);}
   .day-pill.active{background:var(--accent-soft);}
   .day-pill.active .num{background:var(--accent);color:var(--accent-ink);transform:scale(1.05);}
@@ -123,20 +96,18 @@
   .tab-panel.active{display:block;}
   @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
 
-  /* To-Do List */
-  .todos{padding:14px 18px 6px;display:flex;flex-direction:column;gap:6px;}
-  .todo-row{display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(4px);animation:rowIn 0.3s var(--ease) forwards;}
-  .todo-row.removing{animation:rowOut 0.18s var(--ease) forwards;}
+  /* priorities */
+  .priorities{padding:14px 18px 6px;display:flex;flex-direction:column;gap:6px;}
+  .priority-row{display:flex;align-items:center;gap:8px;opacity:0;transform:translateY(4px);animation:rowIn 0.3s var(--ease) forwards;}
+  .priority-row.removing{animation:rowOut 0.18s var(--ease) forwards;}
   @keyframes rowOut{to{opacity:0;transform:translateY(-4px) scale(0.97);}}
-  .todo-check{width:18px;height:18px;cursor:pointer;accent-color:var(--accent);flex-shrink:0;}
-  .todo-text{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--ink);transition:border-color 0.2s var(--ease);}
-  .todo-text.todo-struck{text-decoration:line-through;color:var(--muted);opacity:0.6;}
-  .todo-text:focus{outline:none;border-color:var(--accent);}
-  .todo-time{width:70px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 4px;font-size:12px;color:var(--ink);text-align:center;flex-shrink:0;}
-  .todo-time:focus{outline:none;border-color:var(--accent);}
-  .t-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:8px;font-size:13px;}
-  .todo-add-btn{display:flex;align-items:center;gap:6px;color:var(--muted);background:none;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px;cursor:pointer;align-self:flex-start;transition:border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease);}
-  .todo-add-btn:active{transform:scale(0.96);}
+  .priority-row .p-bullet{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+  .priority-row input{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;color:var(--ink);transition:border-color 0.2s var(--ease);}
+  .priority-row input::placeholder{color:var(--muted);}
+  .priority-row input:focus{outline:none;border-color:var(--accent);}
+  .priority-row .p-del{background:none;border:none;color:var(--muted);cursor:pointer;padding:8px;font-size:13px;}
+  .priority-add-btn{display:flex;align-items:center;gap:6px;color:var(--muted);background:none;border:1px dashed var(--line);border-radius:10px;padding:8px 12px;font-size:12.5px;cursor:pointer;align-self:flex-start;transition:border-color 0.2s var(--ease), color 0.2s var(--ease), transform 0.15s var(--ease);}
+  .priority-add-btn:active{transform:scale(0.96);}
 
   /* carousel + hour rows */
   .carousel-viewport{overflow:hidden;position:relative;touch-action:pan-y;}
@@ -208,16 +179,23 @@
   .empty-hint{color:var(--muted);font-size:12.5px;padding:20px 0;text-align:center;}
 
   /* habits */
-  .habit-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line);}
-  .habit-row:first-of-type{border-top:none;}
-  .habit-days { display: flex; gap: 6px; margin-top: 6px; }
-  .habit-day-toggle { flex:1; height: 32px; max-width: 32px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; font-size: 11px; display:flex; align-items:center; justify-content:center; transition: all 0.2s var(--ease); font-family: 'Space Grotesk', sans-serif;}
-  .habit-day-toggle.done { background: var(--flame); color: white; border-color: var(--flame); }
-  .habit-day-toggle:active { transform: scale(0.9); }
-  
+  .habit-block{border-top:1px solid var(--line);}
+  .habit-block:first-of-type{border-top:none;}
+  .habit-row{display:flex;align-items:center;gap:12px;padding:12px 0 6px;}
+  .habit-days{display:flex;gap:6px;padding:0 8px 10px 56px;}
+  .hd{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:2px;}
+  .hd span{font-size:8.5px;color:var(--muted);font-family:'Space Grotesk',sans-serif;}
+  .hd.today span{color:var(--accent);font-weight:600;}
+  .hd i{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--line);transition:background 0.2s var(--ease),border-color 0.2s var(--ease);}
+  .hd.on i{background:var(--flame);border-color:var(--flame);}
+  .habit-toggle{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--line);flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.25s var(--ease), border-color 0.25s var(--ease), transform 0.2s var(--ease);}
+  .habit-toggle.done{background:var(--flame-soft);border-color:var(--flame);}
+  .habit-toggle:active{transform:scale(0.88);}
+  .habit-toggle svg{width:18px;height:18px;stroke:var(--flame);opacity:0;transition:opacity 0.2s var(--ease), transform 0.3s var(--ease);transform:scale(0.6);}
+  .habit-toggle.done svg{opacity:1;transform:scale(1);}
   .habit-info{flex:1;min-width:0;}
   .habit-name{font-size:14px;font-weight:500;}
-  .habit-streak{font-size:11.5px;color:var(--muted);margin-top:2px;}
+  .habit-streak{font-size:11.5px;color:var(--muted);margin-top:1px;}
   .habit-streak b{color:var(--flame);font-weight:600;}
   .habit-bell{background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 6px;opacity:0.55;transition:color 0.2s var(--ease), opacity 0.2s var(--ease);}
   .habit-bell.on{color:var(--accent);opacity:1;}
@@ -233,7 +211,7 @@
   .week-label{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:600;margin-bottom:10px;}
   .reflect-block{margin-bottom:16px;}
   .reflect-block label{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
-  .reflect-block textarea{width:100%;min-height:70px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13.5px;color:var(--ink);resize:vertical;transition:border-color 0.2s var(--ease);}
+  .reflect-block textarea{width:100%;min-height:70px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;font-size:13.5px;color:var(--ink);resize:none;overflow:hidden;transition:border-color 0.2s var(--ease);}
   .reflect-block textarea:focus{outline:none;border-color:var(--accent);}
   .recap-list{list-style:none;padding:0;margin:0;}
   .recap-list li{padding:8px 0;border-top:1px solid var(--line);font-size:12.5px;}
@@ -315,7 +293,10 @@
 
   /* orbit scrub */
   .orbit-stage{touch-action:none;}
-  #orbitRot{transform-origin:220px 220px;will-change:transform;}
+  .ow2 .hit{fill:transparent;cursor:pointer;}
+  .ow2 .dot{fill:var(--muted);pointer-events:none;}
+  .ow2.has .dot{fill:var(--accent);}
+  .ow2.cur .dot{fill:var(--accent);filter:drop-shadow(0 0 5px var(--accent));animation:owPulse 2.2s ease-in-out infinite;}
   .onotch{fill:var(--accent);}
 
   /* notice strips */
@@ -330,6 +311,7 @@
   .p-done::before{content:'';position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);}
   .p-done.on{background:var(--accent);border-color:var(--accent);}
   .p-done.on::after{content:'';position:absolute;left:4.5px;top:1.5px;width:4px;height:8px;border:solid var(--accent-ink);border-width:0 1.6px 1.6px 0;transform:rotate(40deg);animation:pop 0.25s var(--ease);}
+  .priority-row input.p-struck{text-decoration:line-through;color:var(--muted);}
   .p-bell{padding:8px 4px;}
   .p-bell .bt{font-size:8.5px;display:block;text-align:center;margin-top:1px;font-family:'Space Grotesk',sans-serif;}
 
@@ -342,24 +324,41 @@
   .tr-cap{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;text-align:right;margin-top:4px;}
 
   /* diagnostics */
+  .gh-status{font-size:11px;color:var(--muted);margin:12px 0 8px;}
+  .gh-status b{color:var(--ink);font-weight:500;}
   .diag-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:11px;color:var(--muted);margin-top:10px;flex-wrap:wrap;}
+
+  /* modal system */
+  .modal-ov{position:fixed;inset:0;z-index:60;background:rgba(0,0,0,0.45);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity 0.22s var(--ease);}
+  @media(min-width:600px){.modal-ov{align-items:center;}}
+  .modal-ov.show{opacity:1;}
+  .modal{width:100%;max-width:420px;background:var(--surface);border:1px solid var(--line);border-radius:20px 20px 0 0;padding:20px 18px calc(18px + env(safe-area-inset-bottom));transform:translateY(26px);transition:transform 0.26s var(--ease);}
+  @media(min-width:600px){.modal{border-radius:20px;transform:scale(0.95);}}
+  .modal-ov.show .modal{transform:none;}
+  .modal-title{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:15px;margin-bottom:4px;}
+  .modal-msg{font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.5;}
+  .modal-field{margin-bottom:12px;}
+  .modal-field label{display:block;font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px;}
+  .modal-field input{width:100%;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 12px;font-size:14px;color:var(--ink);color-scheme:light dark;}
+  .modal-field input:focus{outline:none;border-color:var(--accent);}
+  .modal-actions{display:flex;gap:8px;margin-top:14px;}
+  .modal-actions button{flex:1;border-radius:12px;padding:12px;font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--ink);transition:transform 0.15s var(--ease);}
+  .modal-actions button:active{transform:scale(0.96);}
+  .modal-actions .primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);}
+  .modal-actions .danger{background:#D64545;border-color:#D64545;color:#fff;}
+
+  /* meals catalogue */
+  .catalog-strip{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+  .cat-chip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:6px 6px 6px 12px;font-size:12px;color:var(--ink);cursor:pointer;transition:border-color 0.2s var(--ease),transform 0.15s var(--ease);}
+  .cat-chip:active{transform:scale(0.96);}
+  .cat-chip b{font-size:9px;text-transform:uppercase;color:var(--accent);font-weight:600;letter-spacing:0.04em;}
+  .cat-chip button{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;padding:4px;}
+  .msave{width:44px;border-radius:10px;border:1px dashed var(--line);background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:color 0.2s var(--ease),border-color 0.2s var(--ease);}
+  .msave svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;}
 </style>
 </head>
 <body>
 <div class="app">
-
-  <!-- Global Confirmation Modal -->
-  <div id="confirm-modal" class="modal-overlay hidden">
-    <div class="modal-content">
-      <h3 style="margin-top:0;">Confirm</h3>
-      <p id="confirm-msg" style="font-size:14px; color:var(--muted); margin-bottom:20px; line-height:1.5;"></p>
-      <div class="modal-actions">
-        <button id="confirm-cancel" class="btn-secondary">Cancel</button>
-        <button id="confirm-ok" class="btn-danger">Confirm</button>
-      </div>
-    </div>
-  </div>
-
   <header>
     <div class="h-row">
       <div class="brand">
@@ -384,7 +383,7 @@
 
   <div class="tab-panel active" id="tab-today">
     <div id="noticeBar"></div>
-    <div class="todos" id="todosBar"></div>
+    <div class="priorities" id="prioritiesBar"></div>
     <div class="swipe-nav">
       <button class="nav-btn" id="prevBtn" aria-label="Previous day"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg></button>
       <button class="nav-btn" id="nextBtn" aria-label="Next day"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></button>
@@ -404,10 +403,11 @@
       </div>
       <div class="meal-add">
         <input type="time" id="mealTime" value="12:00">
-        <datalist id="mealsCatalogue"></datalist>
-        <input type="text" id="mealName" list="mealsCatalogue" placeholder="What did you eat?">
+        <input type="text" id="mealName" placeholder="What did you eat?">
         <button id="mealAddBtn">+</button>
+        <button id="mealSaveBtn" class="msave" title="Save to catalogue"><svg viewBox="0 0 24 24"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg></button>
       </div>
+      <div class="catalog-strip" id="catalogStrip"></div>
       <div id="mealEditHint" class="empty-hint" style="display:none;padding:0 0 10px;text-align:left;">Editing entry — <a href="#" id="mealCancelEdit" style="color:var(--accent);">cancel</a></div>
       <div id="mealList"></div>
     </div>
@@ -437,7 +437,7 @@
       <div class="trend" id="trendBox"></div>
       <div class="reflect-block"><label>What moved the needle</label><textarea id="reflectGood" placeholder="…"></textarea></div>
       <div class="reflect-block"><label>What to drop next week</label><textarea id="reflectDrop" placeholder="…"></textarea></div>
-      <div class="reflect-block"><label>Priorities recap</label><ul class="recap-list" id="recapList"></ul></div>
+      <div class="reflect-block"><label>To-do recap</label><ul class="recap-list" id="recapList"></ul></div>
       <div class="reflect-block"><label>Data</label>
         <div class="data-row">
           <button class="data-btn" id="exportBtn">Export backup</button>
@@ -445,9 +445,16 @@
           <input type="file" id="importFile" accept=".json,application/json" style="display:none">
         </div>
         <div class="data-row" style="margin-top:8px;">
-          <button class="data-btn" id="githubBtn" style="color:var(--accent); border-color:var(--accent);">Setup Cloud Backup</button>
+          <button class="data-btn" id="ghBtn">Cloud backup</button>
+          <button class="data-btn" id="ghRestoreBtn">Restore from cloud</button>
         </div>
         <div class="data-note" id="dataNote"></div>
+        <div class="gh-status" id="ghStatus"></div>
+        <div class="data-row">
+          <button class="data-btn" id="ghConnectBtn">Connect GitHub</button>
+          <button class="data-btn" id="ghBackupBtn">Back up now</button>
+          <button class="data-btn" id="ghRestoreBtn">Restore</button>
+        </div>
         <div class="diag-row" id="diagBox"></div>
       </div>
     </div>
@@ -457,10 +464,9 @@
     <button class="orbit-close" id="orbitClose">✕</button>
     <div class="orbit-stage">
       <svg class="orbit-svg" viewBox="0 0 440 440">
-        <!-- REMOVED static rotation transform here per static request -->
         <g id="orbitG">
           <g id="orbitRot"></g>
-          <path class="onotch" d="M220 88 L215.5 99 L224.5 99 Z"/>
+          <path class="onotch" d="M220 358 L214.5 347 L225.5 347 Z"/>
         </g>
       </svg>
       <div class="orbit-core">
@@ -495,30 +501,6 @@
 </div>
 
 <script>
-/* ============ global textarea auto-expand ============ */
-document.addEventListener('input', function (e) {
-  if (e.target.tagName.toLowerCase() === 'textarea') {
-    e.target.style.height = 'auto';
-    e.target.style.height = e.target.scrollHeight + 'px';
-  }
-});
-
-/* ============ custom confirm modal ============ */
-function customConfirm(msg, onOk) {
-  const modal = document.getElementById('confirm-modal');
-  document.getElementById('confirm-msg').textContent = msg;
-  modal.classList.remove('hidden');
-  
-  const okBtn = document.getElementById('confirm-ok');
-  const cancelBtn = document.getElementById('confirm-cancel');
-  
-  const newOk = okBtn.cloneNode(true);
-  okBtn.parentNode.replaceChild(newOk, okBtn);
-  
-  newOk.onclick = () => { modal.classList.add('hidden'); onOk(); };
-  cancelBtn.onclick = () => { modal.classList.add('hidden'); };
-}
-
 /* ============ storage: IndexedDB ============ */
 const DB_NAME='logplan-db', STORE='kv';
 let dbPromise=null;
@@ -543,15 +525,42 @@ const Cap=()=>window.Capacitor&&window.Capacitor.Plugins?window.Capacitor.Plugin
 function haptic(style){try{const p=Cap();if(p&&p.Haptics)p.Haptics.impact({style});}catch(e){}}
 const LN=()=>{const p=Cap();return p&&p.LocalNotifications?p.LocalNotifications:null;};
 async function ensureNotifPerm(){
-  const l=LN(); if(!l){alert('Reminders work in the installed Android app, not the browser preview.');return false;}
+  const l=LN(); if(!l){infoModal('Reminders work in the installed Android app, not in the browser preview.');return false;}
   try{
     let s=await l.checkPermissions();
     if(s.display!=='granted'){s=await l.requestPermissions();}
-    if(s.display!=='granted'){alert('Notification permission denied — enable it in Android Settings for Log/Plan.');return false;}
+    if(s.display!=='granted'){infoModal('Notification permission denied — enable it in Android Settings for Log/Plan.');return false;}
     return true;
   }catch(e){return false;}
 }
 function nid(s){let h=0;for(let i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))|0;return (Math.abs(h)%2000000000)||1;}
+
+/* ============ themed modal system ============ */
+function showModal(cfg){
+  return new Promise(resolve=>{
+    const ov=document.createElement('div');ov.className='modal-ov';
+    ov.innerHTML=`<div class="modal">
+      ${cfg.title?`<div class="modal-title">${esc(cfg.title)}</div>`:''}
+      ${cfg.message?`<div class="modal-msg">${esc(cfg.message)}</div>`:''}
+      ${(cfg.fields||[]).map((f,i)=>`<div class="modal-field"><label>${esc(f.label||'')}</label><input data-mf="${i}" type="${f.type||'text'}" value="${esc(f.value||'')}" ${f.min!==undefined?`min="${f.min}"`:''} ${f.max!==undefined?`max="${f.max}"`:''} placeholder="${esc(f.placeholder||'')}"></div>`).join('')}
+      <div class="modal-actions">
+        ${cfg.hideCancel?'':`<button class="m-cancel">${esc(cfg.cancelText||'Cancel')}</button>`}
+        <button class="${cfg.danger?'danger':'primary'} m-ok">${esc(cfg.confirmText||'OK')}</button>
+      </div></div>`;
+    document.body.appendChild(ov);
+    requestAnimationFrame(()=>ov.classList.add('show'));
+    const close=v=>{ov.classList.remove('show');setTimeout(()=>ov.remove(),240);resolve(v);};
+    const cxl=ov.querySelector('.m-cancel');if(cxl)cxl.onclick=()=>close(null);
+    ov.querySelector('.m-ok').onclick=()=>{
+      const vals=[...ov.querySelectorAll('[data-mf]')].map(i=>i.value);
+      close(cfg.fields&&cfg.fields.length?vals:true);
+    };
+    ov.addEventListener('click',e=>{if(e.target===ov)close(null);});
+    const first=ov.querySelector('[data-mf]');if(first&&(first.type==='text'||first.type==='number'))first.focus();
+  });
+}
+const confirmModal=(message,confirmText='Delete')=>showModal({title:'Are you sure?',message,confirmText,danger:true});
+const infoModal=(message,title='Notice')=>showModal({title,message,confirmText:'OK',hideCancel:true});
 
 /* ============ date helpers ============ */
 const START_HOUR=5, END_HOUR=24;
@@ -573,7 +582,7 @@ let weekData=null, dayIsos=[], saveTimer=null, notifTimer=null;
 let habitsData=null, countdownsData=null;
 let defaultLead=10;
 
-function emptyDay(){const hours={};for(let h=START_HOUR;h<=END_HOUR;h++)hours[h]={plan:'',log:'',done:false};return {todos:[],hours,meals:[]};}
+function emptyDay(){const hours={};for(let h=START_HOUR;h<=END_HOUR;h++)hours[h]={plan:'',log:'',done:false};return {priorities:[],hours,meals:[]};}
 function emptyWeek(){const days={};for(let i=0;i<7;i++)days[isoDate(addDays(currentMonday,i))]=emptyDay();return {days,reflection:{good:'',drop:''}};}
 
 async function loadWeek(){
@@ -586,13 +595,10 @@ async function loadWeek(){
     dayIsos.push(k);
     if(!weekData.days[k])weekData.days[k]=emptyDay();
     const day=weekData.days[k];
-    // migration to todos
-    if(!day.todos){
-      if(day.priorities) day.todos=day.priorities;
-      else if(Array.isArray(day.top3))day.todos=day.top3.filter(t=>t&&t.trim()).map(t=>({id:'t'+Date.now()+Math.random().toString(36).slice(2,5),text:t,time:'',done:false}));
-      else day.todos=[];
+    if(!day.priorities){
+      if(Array.isArray(day.top3))day.priorities=day.top3.filter(t=>t&&t.trim()).map(t=>({id:'p'+Date.now()+Math.random().toString(36).slice(2,5),text:t}));
+      else day.priorities=[];
       delete day.top3;
-      delete day.priorities;
     }
     if(!day.hours)day.hours={};
     if(!day.meals)day.meals=[];
@@ -602,54 +608,11 @@ async function loadWeek(){
   renderAll();
   setSaveState('saved');
 }
-
-/* ============ GitHub Backup Integration ============ */
-async function syncToGitHub() {
-  const token = localStorage.getItem('github_pat');
-  if (!token) return;
-  
-  let gistId = localStorage.getItem('backup_gist_id');
-  const url = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
-  const method = gistId ? 'PATCH' : 'POST';
-  
-  try {
-    const keys=await storage.keys('app-');const data={};
-    for(const k of keys){const r=await storage.get(k);if(r)data[k]=r.value;}
-    const payload=JSON.stringify({app:'logplan',version:3,exportedAt:new Date().toISOString(),records:keys.length,data});
-
-    const res = await fetch(url, {
-      method: method,
-      headers: {
-        'Authorization': `token ${token}`,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        description: "Logplan App Backup",
-        public: false,
-        files: { "logplan-data.json": { content: payload } }
-      })
-    });
-    
-    const result = await res.json();
-    if (!gistId && result.id) {
-      localStorage.setItem('backup_gist_id', result.id);
-    }
-  } catch (err) {
-    console.error("Backup failed", err);
-  }
-}
-
 function scheduleSave(){
   setSaveState('saving');
   clearTimeout(saveTimer);
   saveTimer=setTimeout(async()=>{
-    try{
-        await storage.set(weekKey(currentMonday),JSON.stringify(weekData));
-        storedWeekSet=null;
-        setSaveState('saved');
-        syncToGitHub();
-    }
+    try{await storage.set(weekKey(currentMonday),JSON.stringify(weekData));storedWeekSet=null;setSaveState('saved');queueCloudBackup();}
     catch(e){setSaveState('error');}
   },350);
 }
@@ -685,7 +648,7 @@ function renderWeekHeader(){
 }
 
 /* ============ render ============ */
-function renderAll(){renderWeekHeader();renderWeekStrip();renderTodos();renderCarousel();renderGrid();renderCountdowns();updateNotices();
+function renderAll(){renderWeekHeader();renderWeekStrip();renderPriorities();renderCarousel();renderGrid();renderCountdowns();updateNotices();
   if(document.getElementById('tab-meals').classList.contains('active'))renderMeals();
   if(document.getElementById('tab-week').classList.contains('active'))renderWeekTab();
 }
@@ -702,71 +665,72 @@ function renderWeekStrip(){
     strip.appendChild(b);
   });
 }
-
-const BELL_SVG=`<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>`;
-
-/* ============ To-Do List ============ */
-function renderTodos(){
-  const bar=document.getElementById('todosBar');
+function renderPriorities(){
+  const bar=document.getElementById('prioritiesBar');
   const iso=dayIsos[activeIdx];
-  const ts=weekData.days[iso].todos;
-  bar.innerHTML=ts.map(t=>`
-    <div class="todo-row" data-id="${t.id}">
-      <input type="checkbox" class="todo-check" data-check="${t.id}" ${t.done?'checked':''}>
-      <input type="text" placeholder="New to-do" data-id="${t.id}" class="todo-text ${t.done?'todo-struck':''}" value="${esc(t.text)}">
-      <input type="time" class="todo-time" data-time="${t.id}" value="${t.time||''}">
-      <button class="bell-btn todo-bell${t.remind?' on':''}" data-tbell="${t.id}">${BELL_SVG}${t.remind?`<span class="bt">${t.remind.time}</span>`:''}</button>
-      <button class="t-del" data-id="${t.id}">✕</button>
-    </div>`).join('')+`<button class="todo-add-btn" id="addTodoBtn">+ Add task</button>`;
-  
-  bar.oninput=e=>{
-    if(e.target.type==='text') {
-       const t=ts.find(x=>x.id===e.target.dataset.id);if(t){t.text=e.target.value;scheduleSave();if(t.remind)scheduleNotifSync();}
-    }
-  };
-  bar.onchange=e=>{
-    if(e.target.type==='checkbox') {
-       const t=ts.find(x=>x.id===e.target.dataset.check);if(t){t.done=e.target.checked;haptic('LIGHT');scheduleSave();renderTodos();scheduleNotifSync();}
-    }
-    if(e.target.type==='time') {
-       const t=ts.find(x=>x.id===e.target.dataset.time);if(t){t.time=e.target.value;scheduleSave();}
-    }
-  };
+  const ps=weekData.days[iso].priorities;
+  bar.innerHTML=ps.map(p=>`
+    <div class="priority-row" data-id="${p.id}">
+      <div class="p-done${p.done?' on':''}" data-done="${p.id}"></div>
+      <input placeholder="New to-do" data-id="${p.id}" class="${p.done?'p-struck':''}" value="${esc(p.text)}">
+      <button class="bell-btn p-bell${p.time?' on':''}" data-ptime="${p.id}">${CLOCK_SVG}${p.time?`<span class="bt">${p.time}</span>`:''}</button>
+      <button class="bell-btn p-bell${p.remind?' on':''}" data-pbell="${p.id}">${BELL_SVG}${p.remind?`<span class="bt">${p.remind.time}</span>`:''}</button>
+      <button class="p-del" data-id="${p.id}">✕</button>
+    </div>`).join('')+`<button class="priority-add-btn" id="addPriorityBtn">+ Add to-do</button>`;
+  bar.oninput=e=>{const p=ps.find(x=>x.id===e.target.dataset.id);if(p){p.text=e.target.value;scheduleSave();if(p.remind)scheduleNotifSync();}};
   bar.onclick=async e=>{
-    const bell=e.target.closest('[data-tbell]');
-    if(bell){
-      const t=ts.find(x=>x.id===bell.dataset.tbell);
-      if(t.remind){
-        customConfirm(`Remove the ${t.remind.time} reminder?`, () => {t.remind=null;scheduleSave();renderTodos();scheduleNotifSync();});
-        return;
-      }
-      if(!t.text||!t.text.trim()){alert('Write the task first, then set its reminder.');return;}
-      if(!await ensureNotifPerm())return;
-      const timeToUse = t.time || '09:00';
-      const prmpt = prompt(`Remind at what time on ${iso}? (24h HH:MM)`, timeToUse);
-      if(!prmpt)return;
-      if(!/^([01]?\d|2[0-3]):[0-5]\d$/.test(prmpt)){alert('Use HH:MM, e.g. 09:00 or 18:30.');return;}
-      const [hh,mm]=prmpt.split(':').map(Number);
-      const fire=new Date(iso+'T00:00:00');fire.setHours(hh,mm,0,0);
-      if(fire<=new Date()){alert('That time has already passed for this day.');return;}
-      t.remind={time:prmpt};haptic('LIGHT');
-      scheduleSave();renderTodos();scheduleNotifSync();
+    const done=e.target.closest('.p-done');
+    if(done){
+      const p=ps.find(x=>x.id===done.dataset.done);
+      p.done=!p.done;haptic('LIGHT');
+      scheduleSave();renderPriorities();scheduleNotifSync();
       return;
     }
-    if(e.target.classList.contains('t-del')){
-      customConfirm('Delete this task?', () => {
-        const row=bar.querySelector(`.todo-row[data-id="${e.target.dataset.id}"]`);
-        row.classList.add('removing');haptic('MEDIUM');
-        setTimeout(()=>{weekData.days[iso].todos=weekData.days[iso].todos.filter(x=>x.id!==e.target.dataset.id);scheduleSave();renderTodos();scheduleNotifSync();},170);
-      });
-    } else if(e.target.id==='addTodoBtn'||e.target.closest('#addTodoBtn')){
-      const t={id:'t'+Date.now()+Math.random().toString(36).slice(2,5),text:'',time:'',done:false};
-      weekData.days[iso].todos.push(t);scheduleSave();renderTodos();
-      const inp=bar.querySelector(`.todo-row[data-id="${t.id}"] input[type=text]`);if(inp)inp.focus();
+    const tbtn=e.target.closest('[data-ptime]');
+    if(tbtn){
+      const p=ps.find(x=>x.id===tbtn.dataset.ptime);
+      const v=await showModal({title:'To-do time',message:'Optional. Leave empty to clear.',fields:[{type:'time',label:'Time',value:p.time||''}],confirmText:'Save'});
+      if(v===null)return;
+      p.time=v[0]||null;
+      scheduleSave();renderPriorities();
+      return;
+    }
+    const bell=e.target.closest('[data-pbell]');
+    if(bell){
+      const p=ps.find(x=>x.id===bell.dataset.pbell);
+      if(p.remind){
+        if(await confirmModal(`Remove the ${p.remind.time} reminder?`,'Remove')){p.remind=null;scheduleSave();renderPriorities();scheduleNotifSync();}
+        return;
+      }
+      if(!p.text||!p.text.trim()){infoModal('Write the to-do first, then set its reminder.');return;}
+      if(!await ensureNotifPerm())return;
+      const v=await showModal({title:'To-do reminder',message:`Notify on ${iso}.`,fields:[{type:'time',label:'Time',value:p.time||'09:00'}],confirmText:'Set reminder'});
+      if(!v||!v[0])return;
+      const [hh,mm]=v[0].split(':').map(Number);
+      const fire=new Date(iso+'T00:00:00');fire.setHours(hh,mm,0,0);
+      if(fire<=new Date()){infoModal('That time has already passed for this day.');return;}
+      p.remind={time:v[0]};haptic('LIGHT');
+      scheduleSave();renderPriorities();scheduleNotifSync();
+      return;
+    }
+    if(e.target.classList.contains('p-del')){
+      if(!(await confirmModal('Delete this to-do?')))return;
+      const row=bar.querySelector(`.priority-row[data-id="${e.target.dataset.id}"]`);
+      if(!row)return;
+      const id=e.target.dataset.id;
+      row.classList.add('removing');haptic('MEDIUM');
+      setTimeout(()=>{weekData.days[iso].priorities=weekData.days[iso].priorities.filter(p=>p.id!==id);scheduleSave();renderPriorities();scheduleNotifSync();},170);
+    } else if(e.target.id==='addPriorityBtn'||e.target.closest('#addPriorityBtn')){
+      const p={id:'p'+Date.now()+Math.random().toString(36).slice(2,5),text:'',done:false,time:null};
+      weekData.days[iso].priorities.push(p);scheduleSave();renderPriorities();
+      const inp=bar.querySelector(`.priority-row[data-id="${p.id}"] input`);if(inp)inp.focus();
     }
   };
 }
 
+
+const CLOCK_SVG=`<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>`;
+const BELL_SVG=`<svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg>`;
 function hourRowsHTML(iso){
   const nowH=currentHour();
   const isToday=iso===isoDate(new Date());
@@ -791,7 +755,7 @@ function hourRowsHTML(iso){
 }
 function autoresize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function autoresizeAll(root){requestAnimationFrame(()=>{root.querySelectorAll('textarea.plan-input,textarea.log-input').forEach(autoresize);});}
-
+/* single delegated handler set per container — 280+ fields, 2 listeners */
 function wireHourContainer(root){
   root.oninput=e=>{
     const t=e.target;
@@ -822,23 +786,24 @@ async function toggleHourReminder(bell){
   const {day,hour}=bell.dataset;
   const cell=weekData.days[day].hours[hour];
   if(cell.remind){
-    cell.remind=null;
-    bell.classList.remove('on');
-    scheduleSave();scheduleNotifSync();
+    if(await confirmModal('Remove the reminder for this block?','Remove')){
+      cell.remind=null;bell.classList.remove('on');scheduleSave();scheduleNotifSync();
+    }
     return;
   }
   const fire=new Date(`${day}T00:00:00`);
   fire.setHours(+hour%24);if(+hour===24)fire.setDate(fire.getDate()+1);
-  if(fire<=new Date()){alert('That hour is already in the past.');return;}
+  if(fire<=new Date()){infoModal('That hour is already in the past.');return;}
   if(!await ensureNotifPerm())return;
-  const lead=prompt('Remind how many minutes before? (0–60)',String(defaultLead));
-  if(lead===null)return;
-  const n=Math.max(0,Math.min(60,parseInt(lead,10)||0));
+  const v=await showModal({title:'Block reminder',message:`Notify before the ${fmtHour(+hour)} block on ${day}.`,fields:[{type:'number',label:'Minutes before (0–60)',value:String(defaultLead),min:0,max:60}],confirmText:'Set reminder'});
+  if(v===null)return;
+  const n=Math.max(0,Math.min(60,parseInt(v[0],10)||0));
   defaultLead=n;storage.set('app-remind-lead',String(n)).catch(()=>{});
   cell.remind={lead:n};
   bell.classList.add('on');haptic('LIGHT');
   scheduleSave();scheduleNotifSync();
 }
+
 
 let dragStartX=null,dragDelta=0,trackWidth=0;
 function renderCarousel(){
@@ -873,13 +838,13 @@ function attachDrag(){
     if(dragDelta<-60&&activeIdx<6)activeIdx++;
     else if(dragDelta>60&&activeIdx>0)activeIdx--;
     dragStartX=null;dragDelta=0;positionTrack(true);
-    renderWeekStrip();renderTodos();updateNotices();
+    renderWeekStrip();renderPriorities();updateNotices();
     if(document.getElementById('tab-meals').classList.contains('active'))renderMeals();
   };
   vp.onpointerup=end;vp.onpointercancel=end;
 }
 function goToDay(i){
-  activeIdx=i;positionTrack(true);renderWeekStrip();renderTodos();updateNotices();
+  activeIdx=i;positionTrack(true);renderWeekStrip();renderPriorities();updateNotices();
   if(document.getElementById('tab-meals').classList.contains('active'))renderMeals();
 }
 document.getElementById('prevBtn').addEventListener('click',()=>{if(activeIdx>0)goToDay(activeIdx-1);});
@@ -900,28 +865,51 @@ function renderGrid(){
 }
 
 /* ============ meals ============ */
-let editingMealId=null, selectedTag='Lunch';
+let editingMealId=null, selectedTag='Lunch', mealCatalog=[];
 function defaultTagForTime(t){const h=parseInt(t.split(':')[0],10);if(h<11)return 'Breakfast';if(h<16)return 'Lunch';if(h<21)return 'Dinner';return 'Snack';}
 function setSelectedTag(tag){selectedTag=tag;document.querySelectorAll('.tag-pill').forEach(p=>p.classList.toggle('selected',p.dataset.tag===tag));}
 document.querySelectorAll('.tag-pill').forEach(p=>p.addEventListener('click',()=>setSelectedTag(p.dataset.tag)));
 document.getElementById('mealTime').addEventListener('change',e=>{if(!editingMealId)setSelectedTag(defaultTagForTime(e.target.value));});
 setSelectedTag(defaultTagForTime('12:00'));
 function fmtTime12(t){const [h,m]=t.split(':').map(Number);const p=h<12?'AM':'PM';let hr=h%12;if(hr===0)hr=12;return `${hr}:${String(m).padStart(2,'0')}${p}`;}
-
-async function updateMealsCatalogue(name) {
-    let cat = [];
-    try{const cR = await storage.get('app-meals-cat'); if(cR) cat=JSON.parse(cR.value);}catch(e){}
-    if(!cat.includes(name)){
-        cat.push(name);
-        storage.set('app-meals-cat', JSON.stringify(cat));
-        document.getElementById('mealsCatalogue').innerHTML = cat.map(c => `<option value="${esc(c)}">`).join('');
+async function loadCatalog(){try{const r=await storage.get('app-meal-catalog');mealCatalog=r?JSON.parse(r.value):[];}catch(e){mealCatalog=[];}}
+function saveCatalog(){storage.set('app-meal-catalog',JSON.stringify(mealCatalog)).catch(()=>{});queueCloudBackup();}
+function renderCatalog(){
+  const s=document.getElementById('catalogStrip');
+  if(!mealCatalog.length){s.innerHTML='';return;}
+  s.innerHTML=mealCatalog.map(m=>`<span class="cat-chip" data-cid="${m.id}"><b>${esc(m.tag)}</b>${esc(m.name)}<button data-cdel="${m.id}">✕</button></span>`).join('');
+  s.onclick=async e=>{
+    const del=e.target.closest('[data-cdel]');
+    if(del){
+      const m=mealCatalog.find(x=>x.id===del.dataset.cdel);
+      if(m&&await confirmModal(`Remove "${m.name}" from your catalogue?`,'Remove')){
+        mealCatalog=mealCatalog.filter(x=>x.id!==del.dataset.cdel);saveCatalog();renderCatalog();
+      }
+      return;
     }
+    const chip=e.target.closest('[data-cid]');
+    if(chip){
+      const m=mealCatalog.find(x=>x.id===chip.dataset.cid);
+      if(!m)return;
+      const iso=dayIsos[activeIdx];
+      const time=document.getElementById('mealTime').value||'12:00';
+      weekData.days[iso].meals.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,6),time,name:m.name,tag:m.tag});
+      haptic('LIGHT');scheduleSave();renderMeals();
+    }
+  };
 }
-
+document.getElementById('mealSaveBtn').addEventListener('click',async()=>{
+  const name=document.getElementById('mealName').value.trim();
+  if(!name){infoModal('Type the meal name first, then save it to the catalogue.');return;}
+  if(mealCatalog.some(m=>m.name.toLowerCase()===name.toLowerCase()&&m.tag===selectedTag)){infoModal('That meal is already in your catalogue.');return;}
+  mealCatalog.push({id:'m'+Date.now(),name,tag:selectedTag});
+  haptic('LIGHT');saveCatalog();renderCatalog();
+});
 function renderMeals(){
   const iso=dayIsos[activeIdx];
   const d=addDays(currentMonday,activeIdx);
   document.getElementById('mealsDayLabel').textContent=`Meals · ${DOW[activeIdx]} ${d.getDate()}`;
+  renderCatalog();
   const list=document.getElementById('mealList');
   const meals=weekData.days[iso].meals.slice().sort((a,b)=>a.time.localeCompare(b.time));
   if(meals.length===0){list.innerHTML=`<div class="empty-hint">No meals logged for this day yet.</div>`;return;}
@@ -931,18 +919,18 @@ function renderMeals(){
       <div class="m-mid" data-edit="${m.id}"><span class="m-tag">${esc(m.tag||'Meal')}</span><div class="m-name">${esc(m.name)}</div></div>
       <button class="m-del" data-id="${m.id}">✕</button>
     </div>`).join('');
-  list.onclick=e=>{
+  list.onclick=async e=>{
     const del=e.target.closest('.m-del');
     if(del){
-      customConfirm('Delete this entry?', () => {
-        const row=list.querySelector(`[data-row="${del.dataset.id}"]`);
-        row.classList.add('removing');haptic('MEDIUM');
-        setTimeout(()=>{
-          weekData.days[iso].meals=weekData.days[iso].meals.filter(m=>m.id!==del.dataset.id);
-          if(editingMealId===del.dataset.id)cancelMealEdit();
-          scheduleSave();renderMeals();
-        },170);
-      });
+      if(!(await confirmModal('Delete this meal entry?')))return;
+      const row=list.querySelector(`[data-row="${del.dataset.id}"]`);
+      if(!row)return;
+      row.classList.add('removing');haptic('MEDIUM');
+      setTimeout(()=>{
+        weekData.days[iso].meals=weekData.days[iso].meals.filter(m=>m.id!==del.dataset.id);
+        if(editingMealId===del.dataset.id)cancelMealEdit();
+        scheduleSave();renderMeals();
+      },170);
       return;
     }
     const ed=e.target.closest('[data-edit]');
@@ -969,20 +957,13 @@ function cancelMealEdit(){
   document.getElementById('mealEditHint').style.display='none';
 }
 document.getElementById('mealCancelEdit').addEventListener('click',e=>{e.preventDefault();cancelMealEdit();});
-document.getElementById('mealAddBtn').addEventListener('click',()=>{
+document.getElementById('mealAddBtn').addEventListener('click',async()=>{
   const time=document.getElementById('mealTime').value||'12:00';
   const name=document.getElementById('mealName').value.trim();
   if(!name)return;
   const iso=dayIsos[activeIdx];
   const clash=weekData.days[iso].meals.find(m=>m.time===time&&m.id!==editingMealId);
-  if(clash) {
-      customConfirm(`You already logged "${clash.name}" at this time. Add anyway?`, () => saveMealData(iso, time, name));
-  } else {
-      saveMealData(iso, time, name);
-  }
-});
-
-function saveMealData(iso, time, name) {
+  if(clash&&!(await showModal({title:'Same time slot',message:`You already logged "${clash.name}" at this time.`,confirmText:'Add anyway'})))return;
   if(editingMealId){
     const m=weekData.days[iso].meals.find(x=>x.id===editingMealId);
     if(m){m.time=time;m.name=name;m.tag=selectedTag;}
@@ -991,16 +972,16 @@ function saveMealData(iso, time, name) {
     weekData.days[iso].meals.push({id:Date.now()+'-'+Math.random().toString(36).slice(2,6),time,name,tag:selectedTag});
     document.getElementById('mealName').value='';
   }
-  updateMealsCatalogue(name);
   haptic('LIGHT');scheduleSave();renderMeals();
-}
+});
+
 
 /* ============ habits ============ */
 async function loadHabits(){
   try{const r=await storage.get('app-habits');habitsData=r?JSON.parse(r.value):{habits:[{id:'gym',name:'Gym'},{id:'bball',name:'Basketball'}],log:{}};}
   catch(e){habitsData={habits:[{id:'gym',name:'Gym'},{id:'bball',name:'Basketball'}],log:{}};}
 }
-function saveHabits(){storage.set('app-habits',JSON.stringify(habitsData)).catch(()=>{});}
+function saveHabits(){storage.set('app-habits',JSON.stringify(habitsData)).catch(()=>{});queueCloudBackup();}
 function habitStreak(id){
   let streak=0;let d=new Date();
   if(!(habitsData.log[isoDate(d)]&&habitsData.log[isoDate(d)][id]))d=addDays(d,-1);
@@ -1008,40 +989,48 @@ function habitStreak(id){
   return streak;
 }
 function isDuplicateHabit(name,ex){return habitsData.habits.some(h=>h.id!==ex&&h.name.trim().toLowerCase()===name.trim().toLowerCase());}
-
 function renderHabits(){
   const list=document.getElementById('habitList');
-  const today = new Date();
+  const todayIso=isoDate(new Date());
+  const todayLog=habitsData.log[todayIso]||{};
+  const days=[];for(let off=6;off>=0;off--){const d=addDays(new Date(),-off);days.push({iso:isoDate(d),l:'SMTWTFS'[d.getDay()],today:off===0});}
   list.innerHTML=habitsData.habits.map(h=>{
+    const done=!!todayLog[h.id];
     const streak=habitStreak(h.id);
     const rm=h.reminder&&h.reminder.enabled;
-    
-    let daysHtml = '';
-    for(let i=6; i>=0; i--) {
-        let d = new Date(today); d.setDate(today.getDate() - i);
-        let iso = isoDate(d);
-        let isDone = habitsData.log[iso] && habitsData.log[iso][h.id];
-        daysHtml += `<button class="habit-day-toggle ${isDone ? 'done' : ''}" data-hday="${h.id}" data-date="${iso}">${d.getDate()}</button>`;
-    }
-
-    return `<div class="habit-row">
-      <div class="habit-info">
-        <div class="habit-name" data-rename="${h.id}" style="cursor:pointer;">${esc(h.name)}</div>
-        <div class="habit-streak">${streak>0?`<b>${streak}</b> day streak`:'no streak yet'}</div>
-        <div class="habit-days">${daysHtml}</div>
+    return `<div class="habit-block">
+      <div class="habit-row">
+        <div class="habit-toggle${done?' done':''}" data-id="${h.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c3 4 3 6 1 8 1 0-3 1-3 5a4 4 0 108 0c0-2-1-3-1-3 1 3-1 4-2 3 2-3-1-5-3-13z"/></svg>
+        </div>
+        <div class="habit-info">
+          <div class="habit-name" data-rename="${h.id}">${esc(h.name)}</div>
+          <div class="habit-streak">${streak>0?`<b>${streak}</b> day streak`:'no streak yet'}</div>
+        </div>
+        <button class="habit-bell${rm?' on':''}" data-bell="${h.id}">${BELL_SVG}${rm?`<span class="bt">${h.reminder.time}</span>`:''}</button>
+        <button class="habit-del" data-del="${h.id}">✕</button>
       </div>
-      <button class="habit-bell${rm?' on':''}" data-bell="${h.id}">${BELL_SVG}${rm?`<span class="bt">${h.reminder.time}</span>`:''}</button>
-      <button class="habit-del" data-del="${h.id}">✕</button>
+      <div class="habit-days">${days.map(d=>{
+        const on=habitsData.log[d.iso]&&habitsData.log[d.iso][h.id];
+        return `<button class="hd${on?' on':''}${d.today?' today':''}" data-hd="${h.id}" data-iso="${d.iso}"><span>${d.l}</span><i></i></button>`;
+      }).join('')}</div>
     </div>`;
   }).join('');
-  
   list.onclick=async e=>{
-    const tog=e.target.closest('.habit-day-toggle');
+    const hd=e.target.closest('[data-hd]');
+    if(hd){
+      const id=hd.dataset.hd,iso=hd.dataset.iso;
+      if(!habitsData.log[iso])habitsData.log[iso]={};
+      habitsData.log[iso][id]=!habitsData.log[iso][id];
+      haptic('LIGHT');saveHabits();renderHabits();
+      if(iso===todayIso)scheduleNotifSync();
+      return;
+    }
+    const tog=e.target.closest('.habit-toggle');
     if(tog){
-      const id=tog.dataset.hday;
-      const dateStr=tog.dataset.date;
-      if(!habitsData.log[dateStr])habitsData.log[dateStr]={};
-      habitsData.log[dateStr][id]=!habitsData.log[dateStr][id];
+      const id=tog.dataset.id;
+      if(!habitsData.log[todayIso])habitsData.log[todayIso]={};
+      habitsData.log[todayIso][id]=!habitsData.log[todayIso][id];
       haptic('LIGHT');saveHabits();renderHabits();scheduleNotifSync();
       return;
     }
@@ -1049,42 +1038,41 @@ function renderHabits(){
     if(bell){
       const h=habitsData.habits.find(x=>x.id===bell.dataset.bell);
       if(h.reminder&&h.reminder.enabled){
-        customConfirm(`Turn off the daily "${h.name}" reminder (${h.reminder.time})?`, () => {h.reminder.enabled=false;saveHabits();renderHabits();scheduleNotifSync();});
+        if(await confirmModal(`Turn off the daily "${h.name}" reminder (${h.reminder.time})?`,'Turn off')){h.reminder.enabled=false;saveHabits();renderHabits();scheduleNotifSync();}
         return;
       }
       if(!await ensureNotifPerm())return;
-      const t=prompt('Daily reminder time (24h HH:MM)',h.reminder?h.reminder.time:'07:00');
-      if(!t||!/^([01]?\d|2[0-3]):[0-5]\d$/.test(t)){if(t!==null)alert('Use HH:MM, e.g. 07:00 or 18:30.');return;}
-      h.reminder={enabled:true,time:t};
+      const v=await showModal({title:`Daily reminder — ${h.name}`,fields:[{type:'time',label:'Time each day',value:h.reminder?h.reminder.time:'07:00'}],confirmText:'Set'});
+      if(!v||!v[0])return;
+      h.reminder={enabled:true,time:v[0]};
       haptic('LIGHT');saveHabits();renderHabits();scheduleNotifSync();
       return;
     }
     const rn=e.target.closest('[data-rename]');
     if(rn){
       const h=habitsData.habits.find(x=>x.id===rn.dataset.rename);
-      const name=prompt('Rename habit',h.name);
-      if(!name||!name.trim())return;
-      if(isDuplicateHabit(name,h.id)){alert('You already have a habit with that name.');return;}
-      h.name=name.trim();saveHabits();renderHabits();scheduleNotifSync();
+      const v=await showModal({title:'Rename habit',fields:[{type:'text',label:'Name',value:h.name}],confirmText:'Rename'});
+      if(!v||!v[0].trim())return;
+      if(isDuplicateHabit(v[0],h.id)){infoModal('You already have a habit with that name.');return;}
+      h.name=v[0].trim();saveHabits();renderHabits();scheduleNotifSync();
       return;
     }
     const del=e.target.closest('[data-del]');
     if(del){
       const h=habitsData.habits.find(x=>x.id===del.dataset.del);
-      if(h){
-          customConfirm(`Delete "${h.name}"? Its streak history will remain stored but hidden.`, () => {
-             haptic('MEDIUM');
-             habitsData.habits=habitsData.habits.filter(x=>x.id!==del.dataset.del);
-             saveHabits();renderHabits();scheduleNotifSync();
-          });
+      if(h&&await confirmModal(`Delete "${h.name}"? Its history stays stored but hidden.`)){
+        haptic('MEDIUM');
+        habitsData.habits=habitsData.habits.filter(x=>x.id!==del.dataset.del);
+        saveHabits();renderHabits();scheduleNotifSync();
       }
     }
   };
 }
+
 document.getElementById('habitAddBtn').addEventListener('click',()=>{
   const name=document.getElementById('habitName').value.trim();
   if(!name)return;
-  if(isDuplicateHabit(name,null)){alert('You already have a habit with that name.');return;}
+  if(isDuplicateHabit(name,null)){infoModal('You already have a habit with that name.');return;}
   habitsData.habits.push({id:'h'+Date.now(),name});
   document.getElementById('habitName').value='';
   haptic('LIGHT');saveHabits();renderHabits();
@@ -1095,7 +1083,7 @@ async function loadCountdowns(){
   try{const r=await storage.get('app-countdowns');countdownsData=r?JSON.parse(r.value):[{id:'dmat',label:'dMAT test',date:'2026-09-26'}];}
   catch(e){countdownsData=[{id:'dmat',label:'dMAT test',date:'2026-09-26'}];}
 }
-function saveCountdowns(){storage.set('app-countdowns',JSON.stringify(countdownsData)).catch(()=>{});}
+function saveCountdowns(){storage.set('app-countdowns',JSON.stringify(countdownsData)).catch(()=>{});queueCloudBackup();}
 function isDuplicateCountdown(label,date,ex){return countdownsData.some(c=>c.id!==ex&&c.label.trim().toLowerCase()===label.trim().toLowerCase()&&c.date===date);}
 function renderCountdowns(){
   const strip=document.getElementById('countdownStrip');
@@ -1109,17 +1097,16 @@ function renderCountdowns(){
       <button class="cd-del" data-del="${c.id}">✕</button>
     </div>`;
   }).join('')+`<button class="cd-add" id="cdAddBtn">+</button>`;
-  strip.onclick=e=>{
+  strip.onclick=async e=>{
     if(e.target.closest('#cdAddBtn')){editCountdown(null);return;}
     const del=e.target.closest('[data-del]');
     if(del){
       const c=countdownsData.find(x=>x.id===del.dataset.del);
-      if(c){
-        customConfirm(`Delete "${c.label}"?`, () => {
-          const chip=strip.querySelector(`.cd-chip[data-id="${del.dataset.del}"]`);
-          chip.classList.add('removing');haptic('MEDIUM');
-          setTimeout(()=>{countdownsData=countdownsData.filter(x=>x.id!==del.dataset.del);saveCountdowns();renderCountdowns();},150);
-        });
+      if(c&&await confirmModal(`Delete "${c.label}"?`)){
+        const chip=strip.querySelector(`.cd-chip[data-id="${del.dataset.del}"]`);
+        if(chip)chip.classList.add('removing');
+        haptic('MEDIUM');
+        setTimeout(()=>{countdownsData=countdownsData.filter(x=>x.id!==del.dataset.del);saveCountdowns();renderCountdowns();},150);
       }
       return;
     }
@@ -1127,17 +1114,21 @@ function renderCountdowns(){
     if(ed)editCountdown(ed.dataset.edit);
   };
 }
-function editCountdown(id){
+async function editCountdown(id){
   const ex=id?countdownsData.find(c=>c.id===id):null;
-  const label=prompt('Countdown label (e.g. IELTS exam)',ex?ex.label:'');
-  if(!label||!label.trim())return;
-  const date=prompt('Date (YYYY-MM-DD)',ex?ex.date:'');
-  if(!date||!/^\d{4}-\d{2}-\d{2}$/.test(date)||isNaN(new Date(date+'T00:00:00'))){alert('Enter a valid date as YYYY-MM-DD.');return;}
-  if(isDuplicateCountdown(label,date,ex?ex.id:null)){alert('A countdown with that label and date already exists.');return;}
-  if(ex){ex.label=label.trim();ex.date=date;}
-  else countdownsData.push({id:'c'+Date.now(),label:label.trim(),date});
+  const v=await showModal({title:ex?'Edit countdown':'New countdown',fields:[
+    {type:'text',label:'Label',value:ex?ex.label:'',placeholder:'e.g. IELTS exam'},
+    {type:'date',label:'Date',value:ex?ex.date:''}
+  ],confirmText:ex?'Save':'Add'});
+  if(!v)return;
+  const label=(v[0]||'').trim(),date=v[1]||'';
+  if(!label||!/^\d{4}-\d{2}-\d{2}$/.test(date)||isNaN(new Date(date+'T00:00:00'))){infoModal('A label and a valid date are both required.');return;}
+  if(isDuplicateCountdown(label,date,ex?ex.id:null)){infoModal('A countdown with that label and date already exists.');return;}
+  if(ex){ex.label=label;ex.date=date;}
+  else countdownsData.push({id:'c'+Date.now(),label,date});
   saveCountdowns();renderCountdowns();
 }
+
 
 /* ============ week tab ============ */
 function renderWeekTab(){
@@ -1145,7 +1136,7 @@ function renderWeekTab(){
   const o={month:'short',day:'numeric'};
   const {week}=isoWeekNum(currentMonday);
   document.getElementById('weekRangeLabel').textContent=`W${week} · ${currentMonday.toLocaleDateString('en-US',o)} – ${sun.toLocaleDateString('en-US',o)}`;
-  /* adherence */
+  /* adherence: planned = hours with plan text; completed = those also marked done */
   let planned=0,completed=0;const dayStats=[];
   dayIsos.forEach(iso=>{
     let p=0,c=0;const hrs=weekData.days[iso].hours;
@@ -1164,17 +1155,18 @@ function renderWeekTab(){
   }));
   document.getElementById('reflectGood').value=weekData.reflection.good||'';
   document.getElementById('reflectDrop').value=weekData.reflection.drop||'';
+  requestAnimationFrame(()=>{autoresize(document.getElementById('reflectGood'));autoresize(document.getElementById('reflectDrop'));});
   const recap=document.getElementById('recapList');
   recap.innerHTML=dayIsos.map((iso,i)=>{
-    const texts=weekData.days[iso].todos.map(p=>p.text).filter(Boolean);
+    const texts=weekData.days[iso].priorities.map(p=>p.text).filter(Boolean);
     if(texts.length===0)return '';
     const d=addDays(currentMonday,i);
     return `<li><div class="rd">${DOW[i]} ${d.getDate()}</div>${esc(texts.join(' · '))}</li>`;
   }).join('')||`<li class="empty-hint" style="border:none;">Nothing logged yet this week.</li>`;
-  renderTrend();renderDiag();
+  renderTrend();renderDiag();renderGHStatus();
 }
-document.getElementById('reflectGood').addEventListener('input',e=>{weekData.reflection.good=e.target.value;scheduleSave();});
-document.getElementById('reflectDrop').addEventListener('input',e=>{weekData.reflection.drop=e.target.value;scheduleSave();});
+document.getElementById('reflectGood').addEventListener('input',e=>{weekData.reflection.good=e.target.value;autoresize(e.target);scheduleSave();});
+document.getElementById('reflectDrop').addEventListener('input',e=>{weekData.reflection.drop=e.target.value;autoresize(e.target);scheduleSave();});
 
 /* ============ tabs + sliding pill ============ */
 function movePill(){
@@ -1219,7 +1211,7 @@ document.addEventListener('focusin',e=>{
   }
 });
 
-/* ============ theme: custom overlay reveal ============ */
+/* ============ theme: circular reveal ============ */
 function iconMoon(){return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>`;}
 function iconSun(){return `<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>`;}
 function applyTheme(t){
@@ -1227,26 +1219,26 @@ function applyTheme(t){
   if(t==='dark'){document.documentElement.setAttribute('data-theme','dark');btn.innerHTML=iconSun();meta.setAttribute('content','#0E0F12');}
   else{document.documentElement.removeAttribute('data-theme');btn.innerHTML=iconMoon();meta.setAttribute('content','#FAFAF8');}
 }
-document.getElementById('themeBtn').addEventListener('click', e => {
-  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+document.getElementById('themeBtn').addEventListener('click',e=>{
+  const next=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
   haptic('LIGHT');
-  
-  const overlay = document.createElement('div');
-  overlay.className = 'theme-overlay';
-  overlay.style.backgroundColor = next === 'dark' ? '#0E0F12' : '#FAFAF8';
-  overlay.style.clipPath = `circle(0% at ${e.clientX}px ${e.clientY}px)`;
-  document.body.appendChild(overlay);
-
-  requestAnimationFrame(() => {
-    overlay.classList.add('expand');
-    overlay.style.clipPath = `circle(150% at ${e.clientX}px ${e.clientY}px)`;
+  const r=e.currentTarget.getBoundingClientRect();
+  const x=r.left+r.width/2,y=r.top+r.height/2;
+  const maxR=Math.hypot(Math.max(x,innerWidth-x),Math.max(y,innerHeight-y));
+  const ov=document.createElement('div');
+  ov.style.cssText=`position:fixed;left:${x}px;top:${y}px;width:${maxR*2}px;height:${maxR*2}px;margin:-${maxR}px 0 0 -${maxR}px;border-radius:50%;background:${next==='dark'?'#0E0F12':'#FAFAF8'};transform:scale(0);z-index:100;pointer-events:none;will-change:transform;`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(()=>{
+    ov.style.transition='transform 0.34s cubic-bezier(.4,0,.2,1)';
+    ov.style.transform='scale(1)';
   });
-
-  setTimeout(() => { 
-    applyTheme(next); 
-    storage.set('app-theme-pref',next).catch(()=>{});
-    setTimeout(() => overlay.remove(), 100); 
-  }, 400);
+  setTimeout(()=>{
+    applyTheme(next);
+    ov.style.transition='opacity 0.18s ease';
+    ov.style.opacity='0';
+    setTimeout(()=>ov.remove(),200);
+  },350);
+  storage.set('app-theme-pref',next).catch(()=>{});
 });
 
 /* ============ notifications: smart scheduler ============ */
@@ -1260,7 +1252,7 @@ async function syncNotifications(){
     const toSchedule=[];
     const now=new Date();
     const todayIso=isoDate(now);
-    
+    /* habits: next 30 dated notifications each, skipping today if already done or time passed */
     for(const h of habitsData.habits){
       if(!(h.reminder&&h.reminder.enabled))continue;
       const [hh,mm]=h.reminder.time.split(':').map(Number);
@@ -1276,6 +1268,7 @@ async function syncNotifications(){
         toSchedule.push({id:nid(`habit:${h.id}:${iso}`),title:h.name,body:`Time for ${h.name} — keep the streak alive.`,schedule:{at:fire,allowWhileIdle:true}});
       }
     }
+    /* plan reminders: scan all stored weeks for future remind flags */
     const keys=await storage.keys('app-week:');
     for(const k of keys){
       const rec=await storage.get(k);if(!rec)continue;
@@ -1291,12 +1284,12 @@ async function syncNotifications(){
           if(fire<=now)continue;
           toSchedule.push({id:nid(`plan:${iso}:${h}`),title:`Plan · ${fmtHour(+h)}`,body:cell.plan?cell.plan.slice(0,120):'Upcoming planned block.',schedule:{at:fire,allowWhileIdle:true}});
         }
-        if(Array.isArray(day.todos))for(const p of day.todos){
+        if(Array.isArray(day.priorities))for(const p of day.priorities){
           if(!p.remind||p.done||!p.text||!p.text.trim())continue;
           const [hh,mm]=p.remind.time.split(':').map(Number);
           const fire=new Date(`${iso}T00:00:00`);fire.setHours(hh,mm,0,0);
           if(fire<=now)continue;
-          toSchedule.push({id:nid(`prio:${iso}:${p.id}`),title:'Task',body:p.text.slice(0,120),schedule:{at:fire,allowWhileIdle:true}});
+          toSchedule.push({id:nid(`prio:${iso}:${p.id}`),title:'Priority',body:p.text.slice(0,120),schedule:{at:fire,allowWhileIdle:true}});
         }
       }
     }
@@ -1306,24 +1299,9 @@ async function syncNotifications(){
 
 /* ============ backup export / import ============ */
 function dataNote(msg){const el=document.getElementById('dataNote');el.textContent=msg;setTimeout(()=>{if(el.textContent===msg)el.textContent='';},6000);}
-
-document.getElementById('githubBtn').addEventListener('click', () => {
-   const token = prompt("Enter your GitHub Personal Access Token (with 'gist' permission):", localStorage.getItem('github_pat') || "");
-   if (token !== null) {
-       localStorage.setItem('github_pat', token.trim());
-       if(token.trim() !== "") {
-           dataNote("GitHub Token Saved. Running initial backup...");
-           syncToGitHub().then(() => dataNote("Cloud sync successful"));
-       } else {
-           dataNote("GitHub Backup Disabled.");
-           localStorage.removeItem('backup_gist_id');
-       }
-   }
-});
-
 document.getElementById('exportBtn').addEventListener('click',async()=>{
   try{
-    const keys=await storage.keys('app-');const data={};
+    const keys=(await storage.keys('app-')).filter(k=>k!=='app-gh-token');const data={};
     for(const k of keys){const r=await storage.get(k);if(r)data[k]=r.value;}
     const payload=JSON.stringify({app:'logplan',version:3,exportedAt:new Date().toISOString(),records:keys.length,data});
     const fname=`logplan-backup-${isoDate(new Date())}.json`;
@@ -1335,7 +1313,7 @@ document.getElementById('exportBtn').addEventListener('click',async()=>{
         if(p.Share){try{await p.Share.share({title:fname,url:res.uri});}catch(e){}}
         storage.set('app-last-backup',new Date().toISOString()).catch(()=>{});
         dataNote(`Saved: Documents/${fname} (${keys.length} records)`);return;
-      }catch(e){}
+      }catch(e){/* fall through to browser download */}
     }
     const a=document.createElement('a');
     a.href=URL.createObjectURL(new Blob([payload],{type:'application/json'}));
@@ -1352,17 +1330,102 @@ document.getElementById('importFile').addEventListener('change',async e=>{
   try{
     const obj=JSON.parse(await f.text());
     if(obj.app!=='logplan'||typeof obj.data!=='object')throw new Error('Not a Log/Plan backup file.');
-    const keys=Object.keys(obj.data).filter(k=>k.startsWith('app-'));
+    const keys=Object.keys(obj.data).filter(k=>k.startsWith('app-')&&k!=='app-gh-token');
     if(!keys.length)throw new Error('Backup contains no records.');
-    
-    customConfirm(`Import ${keys.length} records from ${obj.exportedAt?obj.exportedAt.slice(0,10):'backup'}?\nMatching data will be overwritten.`, async () => {
-        for(const k of keys)await storage.set(k,obj.data[k]);
-        haptic('MEDIUM');
-        alert('Import complete. Reloading.');
-        location.reload();
-    });
+    const ok=await showModal({title:'Import backup',message:`Import ${keys.length} records from ${obj.exportedAt?obj.exportedAt.slice(0,10):'backup'}? Matching data on this device will be overwritten; everything else is kept.`,confirmText:'Import'});
+    if(!ok)return;
+    for(const k of keys)await storage.set(k,obj.data[k]);
+    haptic('MEDIUM');
+    await infoModal('The app will now reload.','Import complete');
+    location.reload();
   }catch(err){dataNote('Import failed: '+err.message);}
 });
+
+/* ============ GitHub cloud backup (secret Gist) ============ */
+let ghToken=null, ghGist=null, ghAutoT=null;
+function queueCloudBackup(){if(!ghToken)return;clearTimeout(ghAutoT);ghAutoT=setTimeout(()=>ghBackup(true),30000);}
+async function loadGH(){
+  try{const t=await storage.get('app-gh-token');ghToken=t?t.value:null;}catch(e){}
+  try{const g=await storage.get('app-gh-gist');ghGist=g?g.value:null;}catch(e){}
+}
+function renderGHStatus(){
+  const el=document.getElementById('ghStatus');
+  el.innerHTML=ghToken?`Cloud: <b>connected</b> — auto-backup ~30s after changes`:'Cloud: not connected — data lives on this phone only';
+}
+async function ghApi(method,path,body){
+  const res=await fetch('https://api.github.com'+path,{
+    method,
+    headers:{'Authorization':'token '+ghToken,'Accept':'application/vnd.github+json','Content-Type':'application/json'},
+    body:body?JSON.stringify(body):undefined
+  });
+  if(!res.ok)throw new Error('GitHub '+res.status);
+  return res.json();
+}
+async function ghPayload(){
+  const keys=(await storage.keys('app-')).filter(k=>k!=='app-gh-token');
+  const data={};
+  for(const k of keys){const r=await storage.get(k);if(r)data[k]=r.value;}
+  return JSON.stringify({app:'logplan',version:4,exportedAt:new Date().toISOString(),records:keys.length,data});
+}
+async function ghBackup(silent){
+  if(!ghToken){if(!silent)ghConnect();return;}
+  try{
+    const content=await ghPayload();
+    if(ghGist){
+      await ghApi('PATCH','/gists/'+ghGist,{files:{'logplan-backup.json':{content}}});
+    }else{
+      const g=await ghApi('POST','/gists',{description:'Log/Plan backup',public:false,files:{'logplan-backup.json':{content}}});
+      ghGist=g.id;storage.set('app-gh-gist',ghGist).catch(()=>{});
+    }
+    storage.set('app-last-backup',new Date().toISOString()).catch(()=>{});
+    renderGHStatus();
+    if(!silent){haptic('LIGHT');dataNote('Backed up to GitHub ✓');}
+  }catch(e){
+    if(!silent)dataNote('Cloud backup failed: '+e.message);
+    if(String(e.message).includes('401')){ghToken=null;renderGHStatus();}
+  }
+}
+async function ghConnect(){
+  const out=await showModal({
+    title:'Connect GitHub',
+    message:'Create a token at github.com → Settings → Developer settings → Personal access tokens (classic) with ONLY the "gist" scope. It is stored on this device only; backups go to a secret Gist in your account.',
+    fields:[{label:'Personal access token',type:'password',placeholder:'ghp_…'}],
+    confirmText:'Connect'
+  });
+  if(!out||!out[0]||!out[0].trim())return;
+  ghToken=out[0].trim();
+  try{
+    await ghApi('GET','/gists?per_page=1');
+    storage.set('app-gh-token',ghToken).catch(()=>{});
+    renderGHStatus();
+    dataNote('GitHub connected ✓ — backing up now');
+    ghBackup(true);
+  }catch(e){
+    ghToken=null;renderGHStatus();
+    infoModal('Token rejected ('+e.message+'). Check that it has the gist scope.','Connection failed');
+  }
+}
+async function ghRestore(){
+  if(!ghToken||!ghGist){infoModal('Connect GitHub and back up at least once first.','Nothing to restore');return;}
+  try{
+    const g=await ghApi('GET','/gists/'+ghGist);
+    const f=g.files&&g.files['logplan-backup.json'];
+    if(!f)throw new Error('backup file missing');
+    let content=f.content;
+    if(f.truncated){const r=await fetch(f.raw_url);content=await r.text();}
+    const obj=JSON.parse(content);
+    if(obj.app!=='logplan'||typeof obj.data!=='object')throw new Error('invalid backup');
+    const keys=Object.keys(obj.data).filter(k=>k.startsWith('app-')&&k!=='app-gh-token');
+    const ok=await showModal({title:'Restore from cloud',message:`Restore ${keys.length} records from ${obj.exportedAt?obj.exportedAt.slice(0,10):'backup'}? Matching data on this device will be overwritten.`,confirmText:'Restore'});
+    if(!ok)return;
+    for(const k of keys)await storage.set(k,obj.data[k]);
+    haptic('MEDIUM');
+    location.reload();
+  }catch(e){dataNote('Restore failed: '+e.message);}
+}
+document.getElementById('ghConnectBtn').addEventListener('click',ghConnect);
+document.getElementById('ghBackupBtn').addEventListener('click',()=>ghBackup(false));
+document.getElementById('ghRestoreBtn').addEventListener('click',ghRestore);
 
 /* ============ now line: minute tick ============ */
 function updateNowLine(){
@@ -1383,7 +1446,8 @@ setInterval(updateNowLine,60000);
 
 /* ============ year orbit ============ */
 let orbitYear=null, storedWeekSet=null;
-let oRot=0, oStep=0, oTotal=52, oSel=0, oDrag=null, oSettleT=null, oHoldT=null;
+let oSelF=0,oTotal=52,oDrag=null,oTick=0,oSnapRAF=null,oHoldT=null,oSettleT=null,oNodes=[];
+const O_CX=220,O_CY=232,O_RX=175,O_RY=105;
 function weeksInISOYear(y){return isoWeekNum(new Date(y,11,28)).week;}
 function firstISOMonday(y){return getMonday(new Date(y,0,4));}
 async function openOrbit(){
@@ -1396,46 +1460,24 @@ async function openOrbit(){
   document.getElementById('orbitOverlay').classList.add('open');
   renderOrbit();
 }
-function clearOrbitTimers(){clearTimeout(oSettleT);clearTimeout(oHoldT);oSettleT=null;oHoldT=null;}
+function clearOrbitTimers(){clearTimeout(oHoldT);clearTimeout(oSettleT);if(oSnapRAF)cancelAnimationFrame(oSnapRAF);oHoldT=oSettleT=oSnapRAF=null;}
 function closeOrbit(){clearOrbitTimers();oDrag=null;document.getElementById('orbitOverlay').classList.remove('open');}
-
-function setORot(a, animate) {
-  const cx = 220, cy = 220, rx = 178, ry = 112;
-  const radOffset = (a * Math.PI) / 180;
-  const dots = document.querySelectorAll('.ow');
-  
-  dots.forEach((dot) => {
-     const i = parseInt(dot.dataset.idx);
-     const baseAngle = -Math.PI/2 + (i/oTotal)*2*Math.PI;
-     const t = baseAngle + radOffset;
-     const x = (cx + rx * Math.cos(t)).toFixed(1);
-     const y = (cy + ry * Math.sin(t)).toFixed(1);
-     
-     const depth = (y - (cy - ry)) / (2 * ry); 
-     const scale = 0.55 + (0.45 * depth);
-     const opacity = dot.classList.contains('cur') ? 1 : 0.2 + (0.8 * depth);
-     
-     dot.style.transition = animate ? 'transform 0.28s var(--ease), opacity 0.28s var(--ease)' : 'none';
-     
-     const hit = dot.querySelector('.hit');
-     const c = dot.querySelector('.dot');
-     const v = dot.querySelector('.viewring');
-     
-     hit.setAttribute('cx', x); hit.setAttribute('cy', y);
-     c.setAttribute('cx', x); c.setAttribute('cy', y);
-     if(v) { v.setAttribute('cx', x); v.setAttribute('cy', y); }
-     
-     dot.style.transformOrigin = `${x}px ${y}px`;
-     dot.style.transform = `scale(${scale})`;
-     dot.style.opacity = dot.classList.contains('cur') ? 1 : opacity;
-  });
-}
-
-function oSelFromRot(){return ((Math.round(-oRot/oStep))%oTotal+oTotal)%oTotal;}
 function oWeekMonday(i){return addDays(firstISOMonday(orbitYear),i*7);}
-function updateScrubLabel(){
-  const mon=oWeekMonday(oSel),sun=addDays(mon,6),o={month:'short',day:'numeric'};
-  document.getElementById('orbitYearLbl').textContent=`W${oSel+1}`;
+function oSelIdx(){return ((Math.round(oSelF))%oTotal+oTotal)%oTotal;}
+function positionOrbit(){
+  for(const n of oNodes){
+    const t=Math.PI/2+((n.i-oSelF)/oTotal)*2*Math.PI;
+    const x=O_CX+O_RX*Math.cos(t),y=O_CY+O_RY*Math.sin(t);
+    const d=(Math.sin(t)+1)/2; /* 1 = front (bottom), 0 = back */
+    const s=0.5+0.6*d;
+    n.el.setAttribute('transform',`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(3)})`);
+    n.el.style.opacity=(n.b*(0.3+0.7*d)).toFixed(3);
+  }
+}
+function updateScrubLabel(idx){
+  const i=idx===undefined?oSelIdx():idx;
+  const mon=oWeekMonday(i),sun=addDays(mon,6),o={month:'short',day:'numeric'};
+  document.getElementById('orbitYearLbl').textContent=`W${i+1}`;
   document.getElementById('orbitHint').textContent=`${mon.toLocaleDateString('en-US',o)} – ${sun.toLocaleDateString('en-US',o)}`;
 }
 function resetOrbitLabel(){
@@ -1449,55 +1491,61 @@ function orbitJump(monday){
   closeOrbit();
   loadWeek();
 }
-function oSettle(){
-  oRot=Math.round(oRot/oStep)*oStep;
-  setORot(oRot,true);
-  oSel=oSelFromRot();
-  updateScrubLabel();
-  oHoldT=setTimeout(()=>orbitJump(oWeekMonday(oSel)),600);
+function oSnapTo(target,thenOpen){
+  if(oSnapRAF)cancelAnimationFrame(oSnapRAF);
+  const from=oSelF,delta=target-from,t0=performance.now();
+  const step=now=>{
+    const p=Math.min(1,(now-t0)/240),e=1-Math.pow(1-p,3);
+    oSelF=from+delta*e;positionOrbit();
+    if(p<1)oSnapRAF=requestAnimationFrame(step);
+    else{
+      oSelF=target;positionOrbit();updateScrubLabel();
+      if(thenOpen)oHoldT=setTimeout(()=>orbitJump(oWeekMonday(oSelIdx())),600);
+    }
+  };
+  oSnapRAF=requestAnimationFrame(step);
 }
 function renderOrbit(){
   clearOrbitTimers();
   oTotal=weeksInISOYear(orbitYear);
-  oStep=360/oTotal;
   const start=firstISOMonday(orbitYear);
   const cur=isoWeekNum(getMonday(new Date()));
   const view=isoWeekNum(currentMonday);
   const thisMonday=getMonday(new Date());
-  const cx=220,cy=220,rx=178,ry=112;
-  let dots='';
+  let html=`<ellipse class="opath" cx="${O_CX}" cy="${O_CY}" rx="${O_RX}" ry="${O_RY}"/>`;
+  const bases=[];
   for(let i=0;i<oTotal;i++){
-    const t=-Math.PI/2 + (i/oTotal)*2*Math.PI;
-    const x=(cx+rx*Math.cos(t)).toFixed(1), y=(cy+ry*Math.sin(t)).toFixed(1);
-    const mon=addDays(start,i*7), iso=isoDate(mon);
+    const mon=addDays(start,i*7),iso=isoDate(mon);
     const isCur=(cur.year===orbitYear&&cur.week===i+1);
     const isView=(view.year===orbitYear&&view.week===i+1);
     const has=storedWeekSet.has(iso);
     const past=mon<thisMonday&&!isCur;
-    dots+=`<g class="ow${isCur?' cur':''}${has?' has':''}${past?' past':''}" style="animation-delay:${i*9}ms" data-idx="${i}">
-      <circle class="hit" cx="${x}" cy="${y}" r="13" data-iso="${iso}"/>
-      <circle class="dot" cx="${x}" cy="${y}" r="${isCur?6:has?4.6:3.5}"/>
-      ${isView?`<circle class="viewring" cx="${x}" cy="${y}" r="10"/>`:''}
+    bases.push(isCur?1:(past?(has?0.55:0.3):(has?0.9:0.55)));
+    html+=`<g class="ow2${isCur?' cur':''}${has?' has':''}" data-i="${i}">
+      <circle class="hit" cx="0" cy="0" r="14" data-iso="${iso}"/>
+      <circle class="dot" cx="0" cy="0" r="${isCur?6.4:has?5:3.8}"/>
+      ${isView?`<circle class="viewring" cx="0" cy="0" r="10"/>`:''}
     </g>`;
   }
   const g=document.getElementById('orbitRot');
-  g.innerHTML=`<ellipse class="opath" cx="${cx}" cy="${cy}" rx="${rx}" ry="${ry}"/>${dots}`;
-  oSel=(view.year===orbitYear)?view.week-1:0;
-  oRot=-oSel*oStep;
-  setORot(oRot,false);
+  g.innerHTML=html;
+  oNodes=[...g.querySelectorAll('.ow2')].map(el=>({el,i:+el.dataset.i,b:bases[+el.dataset.i]}));
+  oSelF=(view.year===orbitYear)?view.week-1:0;
+  oTick=oSelIdx();
+  positionOrbit();
   resetOrbitLabel();
   const p=g.querySelector('.opath');
   const len=p.getTotalLength();
   p.style.strokeDasharray=len;p.style.strokeDashoffset=len;
   requestAnimationFrame(()=>requestAnimationFrame(()=>{p.style.strokeDashoffset=0;}));
 }
-
 (function(){
   const stage=document.querySelector('.orbit-stage');
   stage.addEventListener('pointerdown',e=>{
     if(e.target.closest('.oy-arrow'))return;
     clearOrbitTimers();
-    oDrag={y:e.clientY,rot:oRot,moved:false,pid:e.pointerId};
+    oDrag={y:e.clientY,selF:oSelF,moved:false,pid:e.pointerId};
+    oTick=oSelIdx();
   });
   stage.addEventListener('pointermove',e=>{
     if(!oDrag)return;
@@ -1507,27 +1555,26 @@ function renderOrbit(){
       oDrag.moved=true;
       try{stage.setPointerCapture(oDrag.pid);}catch(err){}
     }
-    oRot=oDrag.rot+dy*(oStep/30); 
-    setORot(oRot,false);
-    const s=oSelFromRot();
-    if(s!==oSel){oSel=s;haptic('LIGHT');updateScrubLabel();}
+    oSelF=oDrag.selF+dy/34;
+    positionOrbit();
+    const s=oSelIdx();
+    if(s!==oTick){oTick=s;haptic('LIGHT');updateScrubLabel();}
   });
   const endDrag=()=>{
     if(!oDrag)return;
     const moved=oDrag.moved;oDrag=null;
-    if(moved)oSettle();
+    if(moved)oSnapTo(Math.round(oSelF),true);
   };
   stage.addEventListener('pointerup',endDrag);
   stage.addEventListener('pointercancel',endDrag);
   document.getElementById('orbitOverlay').addEventListener('wheel',e=>{
     e.preventDefault();
     clearOrbitTimers();
-    oRot+=(e.deltaY>0?-1:1)*oStep;
-    setORot(oRot,true);
-    const s=oSelFromRot();
-    if(s!==oSel){oSel=s;haptic('LIGHT');}
-    updateScrubLabel();
-    oSettleT=setTimeout(oSettle,320);
+    const target=Math.round(oSelF)+(e.deltaY>0?1:-1);
+    haptic('LIGHT');
+    updateScrubLabel(((target%oTotal)+oTotal)%oTotal);
+    oSnapTo(target,false);
+    oSettleT=setTimeout(()=>oSnapTo(Math.round(oSelF),true),340);
   },{passive:false});
 })();
 document.getElementById('wkCenter').addEventListener('click',openOrbit);
@@ -1553,19 +1600,19 @@ async function updateNotices(){
       if(!(dis&&dis.value===todayIso)){
         const yDate=addDays(today,-1), yIso=isoDate(yDate);
         let ypris=null;
-        if(weekData.days[yIso])ypris=weekData.days[yIso].todos;
+        if(weekData.days[yIso])ypris=weekData.days[yIso].priorities;
         else{
           const r=await storage.get(weekKey(getMonday(yDate)));
-          if(r){const wd=JSON.parse(r.value);ypris=wd.days&&wd.days[yIso]?wd.days[yIso].todos:null;}
+          if(r){const wd=JSON.parse(r.value);ypris=wd.days&&wd.days[yIso]?wd.days[yIso].priorities:null;}
         }
         const unfinished=(ypris||[]).filter(p=>p.text&&p.text.trim()&&!p.done);
         if(unfinished.length){
           bar.insertAdjacentHTML('beforeend',`<div class="notice"><span>${unfinished.length} unfinished from yesterday</span><span class="n-actions"><button id="carryBtn">Carry over</button><button id="carryDismiss" class="ghost">Dismiss</button></span></div>`);
           document.getElementById('carryBtn').onclick=()=>{
             const t=weekData.days[todayIso];
-            unfinished.forEach(p=>t.todos.push({id:'t'+Date.now()+Math.random().toString(36).slice(2,5),text:p.text,time:'',done:false}));
+            unfinished.forEach(p=>t.priorities.push({id:'p'+Date.now()+Math.random().toString(36).slice(2,5),text:p.text,done:false}));
             storage.set('app-carry-dismiss',todayIso).catch(()=>{});
-            haptic('LIGHT');scheduleSave();renderTodos();updateNotices();
+            haptic('LIGHT');scheduleSave();renderPriorities();updateNotices();
           };
           document.getElementById('carryDismiss').onclick=()=>{storage.set('app-carry-dismiss',todayIso).catch(()=>{});updateNotices();};
         }
@@ -1581,8 +1628,8 @@ async function updateNotices(){
     if(due&&!snoozed){
       const ks=await storage.keys('app-week:');
       if(ks.length>=2){
-        bar.insertAdjacentHTML('beforeend',`<div class="notice"><span>${last?`Last backup ${daysBetween(last,today)}d ago`:'No backup yet — data is on this phone only'}</span><span class="n-actions"><button id="nudgeExport">Backup</button><button id="nudgeSnooze" class="ghost">Later</button></span></div>`);
-        document.getElementById('nudgeExport').onclick=()=>{switchTab('week');};
+        bar.insertAdjacentHTML('beforeend',`<div class="notice"><span>${last?`Last backup ${daysBetween(last,today)}d ago`:'No backup yet — data is on this phone only'}</span><span class="n-actions"><button id="nudgeExport">Export</button><button id="nudgeSnooze" class="ghost">Later</button></span></div>`);
+        document.getElementById('nudgeExport').onclick=()=>{switchTab('week');document.getElementById('exportBtn').click();};
         document.getElementById('nudgeSnooze').onclick=()=>{storage.set('app-backup-snooze',isoDate(today)).catch(()=>{});updateNotices();};
       }
     }
@@ -1651,19 +1698,10 @@ if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App){
 (async function init(){
   try{const r=await storage.get('app-theme-pref');applyTheme(r?r.value:'light');}catch(e){applyTheme('light');}
   try{const r=await storage.get('app-remind-lead');if(r)defaultLead=parseInt(r.value,10)||10;}catch(e){}
-  try{
-      const catR = await storage.get('app-meals-cat');
-      if(catR){
-          const cat = JSON.parse(catR.value);
-          document.getElementById('mealsCatalogue').innerHTML = cat.map(c => `<option value="${esc(c)}">`).join('');
-      }
-  }catch(e){}
+  await loadGH();
   await loadHabits();
   await loadCountdowns();
   await loadWeek();
   movePill();
-  syncNotifications(); 
-})();
-</script>
-</body>
-</html>
+  syncNotifications(); /* smart top-up on every open */
+ 
