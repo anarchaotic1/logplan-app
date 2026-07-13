@@ -1704,4 +1704,8 @@ if(window.Capacitor&&window.Capacitor.Plugins&&window.Capacitor.Plugins.App){
   await loadWeek();
   movePill();
   syncNotifications(); /* smart top-up on every open */
- 
+  if(ghToken)setTimeout(()=>ghBackup(true),4000); /* cloud backup on open */
+})();
+</script>
+</body>
+</html>
