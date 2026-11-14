@@ -9,9 +9,11 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "test": "vitest run",
-    "e2e": "playwright test",
-    "sync": "npx cap sync android",
-    "open:android": "npx cap open android"
+    "e2e": "playwright test app pwa import",
+    "perf": "playwright test perf --project=phone",
+    "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android",
+    "android:sync": "npm run build && cap sync android",
+    "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {
     "@aparajita/capacitor-biometric-auth": "^10.0.0",
@@ -24,7 +26,6 @@
     "@capacitor/keyboard": "^8.0.6",
     "@capacitor/local-notifications": "^8.3.1",
     "@capacitor/share": "^8.0.3",
-    "@capacitor/status-bar": "^8.0.4",
     "@capgo/capacitor-social-login": "^8.7.11",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/space-grotesk": "^5.3.0",

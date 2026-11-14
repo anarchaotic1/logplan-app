@@ -1,88 +1,88 @@
 [
   {
     "name": "Open Today: ring sweep",
-    "frames": 107,
+    "frames": 108,
     "medianMs": 16.7,
     "p95Ms": 16.8,
-    "worstMs": 83.4,
+    "worstMs": 66.6,
     "over33ms": 2,
-    "avgFps": 56.3
+    "avgFps": 56.8
   },
   {
     "name": "Ring to timeline (shared-element zoom)",
     "frames": 148,
     "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 66.7,
+    "p95Ms": 33.3,
+    "worstMs": 83.4,
     "over33ms": 2,
-    "avgFps": 56.2
+    "avgFps": 54.1
   },
   {
     "name": "Complete a block (check draws, block brightens)",
-    "frames": 175,
+    "frames": 178,
     "medianMs": 16.7,
     "p95Ms": 16.8,
     "worstMs": 16.8,
     "over33ms": 0,
-    "avgFps": 60.2
+    "avgFps": 60.3
   },
   {
     "name": "Open block sheet",
-    "frames": 57,
+    "frames": 59,
     "medianMs": 16.7,
     "p95Ms": 16.8,
-    "worstMs": 49.9,
+    "worstMs": 66.6,
     "over33ms": 1,
-    "avgFps": 57
+    "avgFps": 56.2
   },
   {
     "name": "Tab switch: Today to Habits",
-    "frames": 76,
+    "frames": 77,
     "medianMs": 16.7,
-    "p95Ms": 16.7,
-    "worstMs": 49.9,
+    "p95Ms": 16.8,
+    "worstMs": 50,
     "over33ms": 1,
-    "avgFps": 58.5
+    "avgFps": 57
   },
   {
     "name": "Habit detail expand (curve draws)",
     "frames": 76,
     "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 100,
+    "p95Ms": 16.7,
+    "worstMs": 83.3,
     "over33ms": 1,
-    "avgFps": 56.3
+    "avgFps": 57
   },
   {
     "name": "Heatmap ripple",
-    "frames": 162,
+    "frames": 75,
     "medianMs": 16.7,
-    "p95Ms": 16.7,
-    "worstMs": 49.9,
+    "p95Ms": 16.8,
+    "worstMs": 33.4,
     "over33ms": 2,
-    "avgFps": 58.6
+    "avgFps": 57.7
   },
   {
     "name": "Tab switch: Habits to Insights (bars and line draw)",
-    "frames": 208,
+    "frames": 68,
     "medianMs": 16.7,
-    "p95Ms": 33.3,
-    "worstMs": 83.3,
-    "over33ms": 9,
-    "avgFps": 52
+    "p95Ms": 49.9,
+    "worstMs": 50.1,
+    "over33ms": 4,
+    "avgFps": 53
   },
   {
     "name": "Open year orbit (53 nodes)",
     "frames": 91,
     "medianMs": 16.7,
     "p95Ms": 16.8,
-    "worstMs": 116.7,
-    "over33ms": 3,
+    "worstMs": 116.6,
+    "over33ms": 4,
     "avgFps": 54.1
   },
   {
     "name": "Weekly review ceremony",
-    "frames": 149,
+    "frames": 148,
     "medianMs": 16.7,
     "p95Ms": 16.7,
     "worstMs": 16.8,
@@ -91,9 +91,9 @@
   },
   {
     "name": "Idle Today screen (ambient stars only)",
-    "frames": 240,
+    "frames": 238,
     "medianMs": 16.7,
-    "p95Ms": 16.8,
+    "p95Ms": 16.7,
     "worstMs": 16.8,
     "over33ms": 0,
     "avgFps": 60

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
-import { convertV1, readV1, runMigration, MIGRATION_STAMP } from '../src/lib/migrate';
+import { convertV1, importV1Backup, readV1, runMigration, MIGRATION_STAMP } from '../src/lib/migrate';
 import { useDbForTests, kvGet, patch, kvSet } from '../src/lib/db';
 import type { Block, Habit, Todo } from '../src/lib/model';
 import { makeV1Dump, writeV1 } from './fixtures';
@@ -98,5 +98,18 @@ describe('runMigration (IndexedDB)', () => {
     const r = await runMigration();
     expect(r.inserted).toBe(all.length - 40);
     expect(await d.rec.count()).toBe(all.length);
+  });
+  it('imports a v1 backup file (the path when v2 cannot be installed over v1), idempotently and without the token', async () => {
+    const d = useDbForTests(`m${n++}`);
+    const file = { app: 'logplan', version: 4, exportedAt: '2026-11-14T10:00:00Z', records: 9, data: makeV1Dump() };
+    const first = await importV1Backup(file);
+    expect(first.inserted).toBe(convertV1(makeV1Dump()).recs.length);
+    await patch<Block>('v1b:2026-11-09:9', { title: 'Edited in v2' });
+    const again = await importV1Backup(file);
+    expect(again.inserted).toBe(0);
+    expect(((await d.rec.get('v1b:2026-11-09:9')) as Block).title).toBe('Edited in v2');
+    expect(JSON.stringify(await kvGet('v1-backup', null))).not.toContain('ghp_');
+    await expect(importV1Backup({ app: 'other', data: {} })).rejects.toThrow();
+    expect((await runMigration()).status).toBe('done'); // already recorded; a later launch does nothing more
   });
 });

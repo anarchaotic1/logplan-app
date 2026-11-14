@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import { db, kvGet } from '../lib/db';
-import { getMigrationReport, type MigrationReport } from '../lib/migrate';
+import { getMigrationReport, importV1Backup, type MigrationReport } from '../lib/migrate';
 import { decryptJSON, deriveKey, encryptJSON, randomBytes, b64, unb64, type Envelope } from '../lib/crypto';
 import type { Rec } from '../lib/model';
 import { mergeRecords } from '../lib/merge';
-import { biometricAvailable, isNative, notifPermission, pendingCount, unlock } from '../lib/native';
+import { biometricAvailable, exactAlarms, isNative, notifPermission, pendingCount, unlock } from '../lib/native';
 import { useLive } from '../hooks';
 import { useApp } from '../store';
 import { connectGoogle, disconnectSync, syncConfigured, syncNow, unlockSync, useSync } from '../syncctl';
@@ -70,9 +70,9 @@ function SyncSection() {
 export function SettingsSheet() {
   const s = useApp((x) => x.settings), set = useApp((x) => x.setSetting), say = useApp((x) => x.say);
   const [mig, setMig] = useState<MigrationReport | null>(null);
-  const [bio, setBio] = useState(false), [perm, setPerm] = useState(''), [pend, setPend] = useState(0);
+  const [bio, setBio] = useState(false), [perm, setPerm] = useState(''), [pend, setPend] = useState(0), [exact, setExact] = useState('unsupported');
   const count = useLive(() => db.rec.count(), [], 0);
-  useEffect(() => { void getMigrationReport().then(setMig); void biometricAvailable().then(setBio); void notifPermission(false).then(setPerm); void pendingCount().then(setPend); }, []);
+  useEffect(() => { void getMigrationReport().then(setMig); void biometricAvailable().then(setBio); void notifPermission(false).then(setPerm); void pendingCount().then(setPend); void exactAlarms().then(setExact); }, []);
 
   const exportAll = async (encrypt: boolean) => {
     const recs = await db.rec.toArray();
@@ -90,7 +90,12 @@ export function SettingsSheet() {
       let obj = JSON.parse(await f.text());
       if (obj.app !== 'logplan') throw new Error('Not a Log/Plan backup file.');
       if (obj.encrypted) { const pass = prompt('Passphrase for this backup:'); if (!pass) return; const { key } = await deriveKey(pass, unb64(obj.salt)); try { obj = await decryptJSON(key, obj.body as Envelope, 'backup'); } catch { throw new Error('Wrong passphrase, or the file is damaged.'); } }
-      if (!Array.isArray(obj.recs)) throw new Error(obj.data ? 'This is a v1 backup. Install v1 data on this device first, or import it in v1.' : 'Backup contains no records.');
+      if (!Array.isArray(obj.recs) && obj.data) { // a backup file made by v1
+        if (!confirm(`This is a v1 backup from ${String(obj.exportedAt).slice(0, 10)}. Import it? Nothing already in v2 is overwritten.`)) return;
+        const r = await importV1Backup(obj); setMig(r);
+        say(`Imported ${r.inserted} items from v1.`); return;
+      }
+      if (!Array.isArray(obj.recs)) throw new Error('Backup contains no records.');
       const m = mergeRecords(await db.rec.toArray(), obj.recs as Rec[]);
       if (!confirm(`Import ${obj.recs.length} records from ${String(obj.exportedAt).slice(0, 10)}? ${m.toLocal.length} are new or newer than what is on this device; nothing newer here is overwritten.`)) return;
       await db.rec.bulkPut(m.toLocal);
@@ -116,6 +121,8 @@ export function SettingsSheet() {
     <section className="col"><span className="label">Notifications</span>
       <p className="small muted" role="status">{isNative ? `Permission: ${perm} · ${pend} scheduled` : 'Reminders ring in the installed Android app. This browser version stores them but does not ring.'}</p>
       {isNative && perm !== 'granted' && <button type="button" className="btn" onClick={async () => setPerm(await notifPermission(true))}>Allow notifications</button>}
+      {isNative && exact === 'denied' && <><p className="small muted">Reminders may arrive a few minutes late because Android's "Alarms & reminders" setting is off for Log/Plan.</p>
+        <button type="button" className="btn" onClick={async () => setExact(await exactAlarms(true))}>Allow on-time reminders</button></>}
     </section>
     <section className="col"><span className="label">Data · {count} records on this device</span>
       <div className="row wrap"><button type="button" className="btn grow" onClick={() => void exportAll(false)}>Export backup</button><button type="button" className="btn grow" onClick={() => void exportAll(true)}>Export encrypted</button></div>

@@ -31,6 +31,14 @@ export async function applyNotifications(planned: PlannedNotif[]): Promise<numbe
   if (planned.length) await LocalNotifications.schedule({ notifications: planned.map((n) => ({ id: n.id, title: n.title, body: n.body, schedule: { at: n.at, allowWhileIdle: true } })) });
   return planned.length;
 }
+/** Android 12+: exact alarms are a user setting. Without it reminders still fire, but may be late by several minutes. */
+export async function exactAlarms(change = false): Promise<'granted' | 'denied' | 'unsupported'> {
+  if (!isNative) return 'unsupported';
+  try {
+    const r = change ? await LocalNotifications.changeExactNotificationSetting() : await LocalNotifications.checkExactNotificationSetting();
+    return r.exact_alarm === 'granted' ? 'granted' : 'denied';
+  } catch { return 'unsupported'; }
+}
 export async function pendingCount(): Promise<number> {
   if (!isNative) return 0;
   try { return (await LocalNotifications.getPending()).notifications.length; } catch { return 0; }

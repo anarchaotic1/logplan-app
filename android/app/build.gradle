@@ -1,0 +1,85 @@
+apply plugin: 'com.android.application'
+
+// Signing: one fixed key for every build, so a new APK always installs over the previous one and keeps its data.
+// Values come from android/keystore.properties (local builds) or LP_* environment variables (CI). See README.
+def lpProps = new Properties()
+def lpPropsFile = rootProject.file('keystore.properties')
+if (lpPropsFile.exists()) { lpPropsFile.withInputStream { lpProps.load(it) } }
+def lpGet = { String key, String env -> lpProps.getProperty(key) ?: System.getenv(env) }
+def lpStoreFile = lpGet('storeFile', 'LP_KEYSTORE_FILE')
+def lpSigned = lpStoreFile != null && file(lpStoreFile).exists()
+
+android {
+    namespace = "com.hari.logplan"
+    compileSdk = rootProject.ext.compileSdkVersion
+    defaultConfig {
+        applicationId "com.hari.logplan"
+        minSdkVersion rootProject.ext.minSdkVersion
+        targetSdkVersion rootProject.ext.targetSdkVersion
+        // v1 shipped versionCode 1. CI passes -PlpVersionCode (200000 + run number) so every build is newer than the last.
+        versionCode((project.findProperty('lpVersionCode') ?: '200000') as Integer)
+        versionName((project.findProperty('lpVersionName') ?: '2.0.0') as String)
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        aaptOptions {
+             // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+             // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
+            ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+    signingConfigs {
+        if (lpSigned) {
+            fixed {
+                storeFile file(lpStoreFile)
+                storePassword lpGet('storePassword', 'LP_KEYSTORE_PASSWORD')
+                keyAlias lpGet('keyAlias', 'LP_KEY_ALIAS')
+                keyPassword lpGet('keyPassword', 'LP_KEY_PASSWORD')
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            if (lpSigned) { signingConfig signingConfigs.fixed } // same key as release, so debug and release builds can replace each other
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (lpSigned) { signingConfig signingConfigs.fixed }
+        }
+    }
+}
+
+repositories {
+    flatDir{
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation "androidx.appcompat:appcompat:$androidxAppCompatVersion"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:$androidxCoordinatorLayoutVersion"
+    implementation "androidx.core:core-splashscreen:$coreSplashScreenVersion"
+    implementation project(':capacitor-android')
+    testImplementation "junit:junit:$junitVersion"
+    androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
+    implementation project(':capacitor-cordova-android-plugins')
+}
+
+apply from: 'capacitor.build.gradle'
+
+// Refuse to produce a release APK without the fixed key: an APK signed with any other key cannot update the installed app.
+gradle.taskGraph.whenReady { graph ->
+    if (!lpSigned && graph.allTasks.any { it.name == 'packageRelease' }) {
+        throw new GradleException('No signing key found. Create android/keystore.properties or set LP_KEYSTORE_FILE, LP_KEYSTORE_PASSWORD, LP_KEY_ALIAS and LP_KEY_PASSWORD (see README, "Signing").')
+    }
+}
+
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception e) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

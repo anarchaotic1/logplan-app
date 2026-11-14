@@ -1,0 +1,67 @@
+name: Test and build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, v2-rebuild]
+    tags: ['v*']
+  pull_request:
+
+env:
+  VITE_GOOGLE_WEB_CLIENT_ID: ${{ vars.GOOGLE_WEB_CLIENT_ID }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - name: Unit tests
+        run: npm test
+      - name: Type-check and build the web app
+        run: npm run build
+      - name: Browser tests (phone, laptop, reduced motion)
+        run: npx playwright test app pwa import
+      - uses: actions/upload-artifact@v4
+        with: { name: logplan-web, path: dist }
+
+  apk:
+    needs: test
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+      - name: Restore the fixed signing key
+        env:
+          LP_KEYSTORE_BASE64: ${{ secrets.LP_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$LP_KEYSTORE_BASE64" ]; then
+            echo "::error::Secret LP_KEYSTORE_BASE64 is not set. See README, 'Signing'. Without the fixed key an APK cannot update the installed app."
+            exit 1
+          fi
+          echo "$LP_KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/logplan.keystore"
+      - name: Build signed release APK
+        env:
+          LP_KEYSTORE_FILE: ${{ runner.temp }}/logplan.keystore
+          LP_KEYSTORE_PASSWORD: ${{ secrets.LP_KEYSTORE_PASSWORD }}
+          LP_KEY_ALIAS: ${{ secrets.LP_KEY_ALIAS }}
+          LP_KEY_PASSWORD: ${{ secrets.LP_KEY_PASSWORD }}
+        run: |
+          VERSION_NAME=$(node -p "require('./package.json').version")
+          cd android && chmod +x gradlew
+          ./gradlew assembleRelease -PlpVersionCode=$((200000 + GITHUB_RUN_NUMBER)) -PlpVersionName="$VERSION_NAME"
+      - name: Show the signing certificate (compare with the SHA-1 registered in Google Cloud)
+        run: keytool -printcert -jarfile android/app/build/outputs/apk/release/app-release.apk | grep -E "SHA1|SHA256" || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: logplan-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk

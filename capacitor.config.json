@@ -1,16 +1,23 @@
 {
   "appId": "com.hari.logplan",
   "appName": "Log/Plan",
-  "webDir": "www",
-  "bundledWebRuntime": false,
+  "webDir": "dist",
+  "backgroundColor": "#040A18",
   "android": {
-    "allowMixedContent": false
+    "allowMixedContent": false,
+    "backgroundColor": "#040A18"
   },
   "plugins": {
-    "StatusBar": {
-      "overlaysWebView": false,
-      "style": "DEFAULT",
-      "backgroundColor": "#FAFAF8"
+    "SystemBars": {
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover",
+      "style": "DARK"
+    },
+    "LocalNotifications": {
+      "iconColor": "#5CE1E6"
+    },
+    "Keyboard": {
+      "resizeOnFullScreen": true
     }
   }
 }

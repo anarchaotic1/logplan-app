@@ -140,6 +140,32 @@ export async function getMigrationReport(): Promise<MigrationReport | null> {
   return kvGet<MigrationReport | null>('migration', null);
 }
 
+/** Inserts converted v1 records that are not present yet. Shared by the on-device migration and by importing a v1 backup file. */
+async function insertV1(safe: V1Dump): Promise<Omit<MigrationReport, 'status' | 'at' | 'v1Keys'>> {
+  const { recs, orphanHabitLogs, warnings } = convertV1(safe);
+  const existing = new Set(await db.rec.where('id').anyOf(recs.map((r) => r.id)).primaryKeys());
+  const missing = recs.filter((r) => !existing.has(r.id));
+  for (let i = 0; i < missing.length; i += 500) await db.rec.bulkAdd(missing.slice(i, i + 500));
+  const lead = Number(safe['app-remind-lead']);
+  if (Number.isFinite(lead) && lead >= 0 && (await kvGet<number | null>('remindLead', null)) == null) await kvSet('remindLead', lead);
+  const byType: Record<string, number> = {};
+  for (const r of recs) byType[r.type] = (byType[r.type] || 0) + 1;
+  return { converted: recs.length, inserted: missing.length, skippedExisting: recs.length - missing.length, byType, orphanHabitLogs, warnings };
+}
+const withoutSecrets = (dump: V1Dump): V1Dump => Object.fromEntries(Object.entries(dump).filter(([k, v]) => k.startsWith('app-') && k !== 'app-gh-token' && typeof v === 'string'));
+
+/** Imports a backup file made by v1 ("Export backup" or the GitHub Gist backup): `{ app: 'logplan', data: { 'app-week:…': '…' } }`.
+ *  This is the path for moving to v2 when the new APK cannot be installed over v1 (v1 builds were signed with throwaway keys). */
+export async function importV1Backup(file: { app?: string; data?: unknown }): Promise<MigrationReport> {
+  if (file.app !== 'logplan' || !file.data || typeof file.data !== 'object') throw new Error('Not a Log/Plan v1 backup file.');
+  const safe = withoutSecrets(file.data as V1Dump);
+  if (!Object.keys(safe).length) throw new Error('The backup contains no records.');
+  if (!(await kvGet('v1-backup', null))) await kvSet('v1-backup', { app: 'logplan', version: 4, exportedAt: new Date().toISOString(), records: Object.keys(safe).length, data: safe });
+  const report: MigrationReport = { status: 'done', at: new Date().toISOString(), v1Keys: Object.keys(safe).length, ...(await insertV1(safe)) };
+  await kvSet('migration', report);
+  return report;
+}
+
 /** Safe to call on every launch. */
 export async function runMigration(idb: IDBFactory = indexedDB): Promise<MigrationReport> {
   const prev = await getMigrationReport();
@@ -147,26 +173,15 @@ export async function runMigration(idb: IDBFactory = indexedDB): Promise<Migrati
   const dump = await readV1(idb);
   const appKeys = dump ? Object.keys(dump).filter((k) => k.startsWith('app-')) : [];
   if (!dump || appKeys.length === 0) {
-    const none: MigrationReport = { status: 'none', v1Keys: 0, converted: 0, inserted: 0, skippedExisting: 0, byType: {}, orphanHabitLogs: 0, warnings: [] };
-    return none; // not stored: if v1 data appears later (e.g. restored), we will still pick it up
+    return { status: 'none', v1Keys: 0, converted: 0, inserted: 0, skippedExisting: 0, byType: {}, orphanHabitLogs: 0, warnings: [] }; // not stored: v1 data that appears later is still picked up
   }
   // 1. Backup first. The GitHub token is a secret and is deliberately not copied.
-  const safe: V1Dump = {};
-  for (const k of appKeys) if (k !== 'app-gh-token') safe[k] = dump[k];
+  const safe = withoutSecrets(dump);
   if (!(await kvGet('v1-backup', null))) {
     await kvSet('v1-backup', { app: 'logplan', version: 4, exportedAt: new Date().toISOString(), records: Object.keys(safe).length, data: safe });
   }
   // 2. Convert and insert only what is missing.
-  const { recs, orphanHabitLogs, warnings } = convertV1(safe);
-  const existing = new Set(await db.rec.where('id').anyOf(recs.map((r) => r.id)).primaryKeys());
-  const missing = recs.filter((r) => !existing.has(r.id));
-  for (let i = 0; i < missing.length; i += 500) await db.rec.bulkAdd(missing.slice(i, i + 500));
-  const lead = Number(safe['app-remind-lead']);
-  if (Number.isFinite(lead) && lead >= 0) await kvSet('remindLead', lead);
-  const byType: Record<string, number> = {};
-  for (const r of recs) byType[r.type] = (byType[r.type] || 0) + 1;
-  const report: MigrationReport = { status: 'done', at: new Date().toISOString(), v1Keys: appKeys.length, converted: recs.length,
-    inserted: missing.length, skippedExisting: recs.length - missing.length, byType, orphanHabitLogs, warnings };
+  const report: MigrationReport = { status: 'done', at: new Date().toISOString(), v1Keys: appKeys.length, ...(await insertV1(safe)) };
   await kvSet('migration', report); // 3. Mark done last, so a crash before this point simply resumes.
   return report;
 }
