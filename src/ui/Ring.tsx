@@ -9,7 +9,9 @@ export function Ring({ blocks, now, onOpen, caption }: { blocks: Block[]; now: n
   const reduce = useReducedMotion();
   const planned = blocks.filter((b) => b.title.trim() || b.log.trim());
   const done = planned.filter((b) => b.done).length;
-  const label = `24-hour day ring. ${now != null ? `It is ${fmtMin(now)}. ` : ''}${planned.length ? `${done} of ${planned.length} blocks done.` : 'No blocks planned.'} Opens the timeline.`;
+  const shown = caption ?? (now != null ? fmtMin(now) : '');
+  // The accessible name starts with the visible text, then says what the control is.
+  const label = `${shown} ${planned.length ? `${done}/${planned.length} blocks done` : '0 tap to plan the day'}. Day ring; opens the timeline.`;
   return (
     <button type="button" className="ring-wrap" onClick={onOpen} aria-label={label} style={{ viewTransitionName: 'day-ring' }}>
       <svg width="260" height="260" viewBox="0 0 260 260" aria-hidden="true" style={{ display: 'block' }}>
@@ -42,7 +44,7 @@ export function Ring({ blocks, now, onOpen, caption }: { blocks: Block[]; now: n
         </motion.div>
       )}
       <span className="ring-center">
-        <span className="mono muted" style={{ fontSize: 12, letterSpacing: '.12em' }}>{caption ?? (now != null ? fmtMin(now) : '')}</span>
+        <span className="mono muted" style={{ fontSize: 12, letterSpacing: '.12em' }}>{shown}</span>
         {planned.length
           ? <span className="big-num"><Count value={done} /><span className="muted" style={{ fontWeight: 400 }}>/{planned.length}</span></span>
           : <span className="big-num muted" style={{ fontWeight: 400 }}>0</span>}

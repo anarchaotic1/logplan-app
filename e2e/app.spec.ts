@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { seedV1 } from './seed';
 
-const shot = (page: Page, name: string) => page.screenshot({ path: `test-results/shots/${test.info().project.name}/${name}.png` });
+const shot = (page: Page, name: string) => page.screenshot({ path: `docs/screenshots/${test.info().project.name}/${name}.png` });
 const tab = (page: Page, name: string) => page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: new RegExp(`^${name}`) }).click();
 const settle = (page: Page) => page.waitForTimeout(test.info().project.name.includes('reduced') ? 150 : 900);
 
@@ -41,7 +41,7 @@ test('migrates v1 data, then every screen renders and passes basic accessibility
   const phone = test.info().project.name.startsWith('phone');
 
   // Today: migrated blocks, to-dos, habits and the carry-over prompt.
-  await expect(page.getByRole('button', { name: /24-hour day ring.*5 of 9 blocks done/ })).toBeVisible();
+  await expect(page.locator('#main').getByRole('button', { name: /5\/9 blocks done/ })).toBeVisible();
   await expect(page.getByText('1 unfinished from yesterday')).toBeVisible();
   await expect(page.getByText('IELTS exam · 5d')).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'Welcome to v2' })).toBeVisible();
@@ -53,7 +53,7 @@ test('migrates v1 data, then every screen renders and passes basic accessibility
   await page.getByLabel('The one thing').press('Enter');
 
   // Timeline, and editing a block.
-  await page.getByRole('button', { name: /24-hour day ring/ }).click();
+  await page.getByRole('button', { name: /Day ring/ }).click();
   await expect(page.getByRole('heading', { name: 'Timeline' })).toBeVisible();
   await settle(page); await shot(page, '02-timeline'); await audit(page, 'Timeline');
   await page.getByRole('button', { name: /^Study: recall practice/ }).first().click();
@@ -65,7 +65,7 @@ test('migrates v1 data, then every screen renders and passes basic accessibility
   await sheet.getByRole('button', { name: '+15m' }).click();
   await sheet.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('button', { name: 'Back to day overview' }).click();
-  await expect(page.getByRole('button', { name: /6 of 9 blocks done/ })).toBeVisible();
+  await expect(page.locator('#main').getByRole('button', { name: /6\/9 blocks done/ })).toBeVisible();
 
   // Quick capture: a to-do in two taps plus typing.
   await page.getByRole('button', { name: 'Quick capture' }).click();
@@ -149,7 +149,7 @@ test('migrates v1 data, then every screen renders and passes basic accessibility
 
   // Reload: data persists and the migration does not run twice.
   await page.reload();
-  await expect(page.getByRole('button', { name: /6 of 9 blocks done/ })).toBeVisible();
+  await expect(page.locator('#main').getByRole('button', { name: /6\/9 blocks done/ })).toBeVisible();
   await expect(page.getByRole('status').filter({ hasText: 'Welcome to v2' })).toHaveCount(0);
   expect(errors, 'console errors').toEqual([]);
 });

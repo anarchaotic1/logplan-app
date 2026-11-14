@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { AnimatePresence, motion } from 'motion/react';
+import { useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { addDays, daysBetween, DOW, dow, mondayOf, weekDays } from '../lib/dates';
 import { byType, byTypeDate } from '../lib/db';
 import type { Habit, HabitLog } from '../lib/model';
@@ -23,18 +23,26 @@ function Curve({ points }: { points: number[] }) {
   );
 }
 function Heat({ habit, logs, today, onToggle }: { habit: Habit; logs: LogMap; today: string; onToggle: (d: string) => void }) {
-  const [pulse, setPulse] = useState<{ i: number; k: number } | null>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
   const start = mondayOf(addDays(today, -7 * 25));
   const days = useMemo(() => Array.from({ length: 26 * 7 }, (_, i) => addDays(start, i)), [start]);
+  // Ripple outward from the tapped day. Uses the Web Animations API on transform and opacity only, with no re-render.
+  const ripple = (i: number) => {
+    if (reduce || !ref.current) return;
+    const cells = ref.current.children;
+    for (let k = 0; k < cells.length; k++) {
+      const dist = Math.hypot(Math.floor(k / 7) - Math.floor(i / 7), (k % 7) - (i % 7));
+      if (dist < 8) cells[k].animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.55)', opacity: 0.45, offset: 0.35 }, { transform: 'scale(1)', opacity: 1 }], { duration: 420, delay: dist * 26, easing: 'cubic-bezier(.22,1,.36,1)' });
+    }
+  };
   return (
-    <div className="heat" role="group" aria-label={`${habit.name}, last 26 weeks. Tap a day to change it.`}>
+    <div className="heat" ref={ref} role="group" aria-label={`${habit.name}, last 26 weeks. Tap a day to change it.`}>
       {days.map((d, i) => {
         const on = isDone(habit, logs[d]), future = d > today;
-        const dist = pulse ? Math.hypot(Math.floor(i / 7) - Math.floor(pulse.i / 7), (i % 7) - (pulse.i % 7)) : 0;
-        return <motion.i key={pulse ? `${d}${pulse.k}` : d} role="button" tabIndex={-1} aria-label={`${d}${on ? ', done' : ''}`}
-          initial={pulse && dist < 9 ? { scale: 0.55, opacity: 0.4 } : false} animate={{ scale: 1, opacity: 1 }} transition={{ ...SPRING, delay: dist * 0.022 }}
-          onClick={() => { if (future) return; haptic(); setPulse({ i, k: Date.now() }); onToggle(d); }}
-          style={{ background: on ? 'var(--accent)' : future ? 'transparent' : !isDue(habit, d) ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.07)', outline: d === today ? '1px solid rgba(255,255,255,.5)' : 'none', cursor: future ? 'default' : 'pointer' }} />;
+        return <i key={d} role="button" tabIndex={-1} aria-label={`${d}${on ? ', done' : ''}`}
+          onClick={() => { if (future) return; haptic(); ripple(i); onToggle(d); }}
+          style={{ background: on ? 'var(--accent)' : future ? 'transparent' : !isDue(habit, d) ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.07)', outline: d === today ? '1px solid rgba(255,255,255,.5)' : 'none', cursor: future ? 'default' : 'pointer', transition: 'background .3s' }} />;
       })}
     </div>
   );
