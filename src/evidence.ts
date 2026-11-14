@@ -1,0 +1,36 @@
+/** Every research claim the app makes, in one place, with its source. Wording is deliberately modest:
+ *  effect sizes are averages across studies, not predictions for one person. Checked against sources on 2026-11-14. */
+export interface Evidence { id: string; feature: string; claim: string; source: string }
+export const EVIDENCE: Evidence[] = [
+  { id: 'habit', feature: 'Habits: forgiving streak and the automaticity curve',
+    claim: 'In a study of 96 people, a new daily behaviour took a median of 66 days to feel close to automatic, with a wide range (18 to 254 days). Missing a single day did not noticeably hurt; being very inconsistent did. So one miss is not a failure here, and the curve is a model of that pattern, not a measurement of you.',
+    source: 'Lally, van Jaarsveld, Potts & Wardle, 2010, European Journal of Social Psychology' },
+  { id: 'cue', feature: 'Cues on habits, blocks and to-dos',
+    claim: 'Linking an action to a specific cue ("after X, I will Y") helps people follow through. Across many studies the average benefit is positive but modest, and it works best for goals you already care about.',
+    source: 'Gollwitzer & Sheeran, 2006 (94 tests, d = .65); Sheeran, Listrom & Gollwitzer, 2024 (642 tests, smaller bias-corrected estimates)' },
+  { id: 'monitor', feature: 'Logging and the day ring',
+    claim: 'Across 138 experiments, prompting people to monitor their progress modestly improved goal attainment, more so when progress was physically recorded. Tracking a behaviour mainly changes that behaviour; tracking an outcome mainly changes that outcome.',
+    source: 'Harkin et al., 2016, Psychological Bulletin (d = 0.40)' },
+  { id: 'loops', feature: 'Evening shutdown and "when will you do it?"',
+    claim: 'In lab studies, unfinished tasks kept intruding on people\'s attention until they made a specific plan for them. Deciding when and where is a small help, not a guarantee.',
+    source: 'Masicampo & Baumeister, 2011, Journal of Personality and Social Psychology' },
+  { id: 'fresh', feature: 'Weekly review',
+    claim: 'People start goal-directed behaviour more often right after "temporal landmarks" such as the start of a week or month: more gym visits, more goal commitments. This comes from archival field data, so it shows a pattern, not a proven cause.',
+    source: 'Dai, Milkman & Riis, 2014, Management Science' },
+  { id: 'fallacy', feature: 'Planned versus actual time',
+    claim: 'People tend to underestimate how long their own tasks will take, even when similar tasks ran late before. Comparing your planned and actual durations gives you your own correction factor.',
+    source: 'Buehler, Griffin & Ross, 1994, Journal of Personality and Social Psychology' },
+  { id: 'study', feature: 'Study mode',
+    claim: 'A large review rated practice testing (recalling from memory) and spreading study over time as the two most useful study techniques, and rereading and highlighting as low utility.',
+    source: 'Dunlosky, Rawson, Marsh, Nathan & Willingham, 2013, Psychological Science in the Public Interest' },
+  { id: 'activity', feature: 'Weekly activity minutes',
+    claim: 'The World Health Organization recommends that adults do at least 150 to 300 minutes of moderate aerobic activity a week (or 75 to 150 vigorous), plus muscle-strengthening on 2 or more days. Some activity is better than none.',
+    source: 'WHO Guidelines on Physical Activity and Sedentary Behaviour, 2020' },
+  { id: 'sleep', feature: 'Sleep regularity',
+    claim: 'In a large UK cohort of mostly older adults wearing wrist sensors, more regular sleep timing was associated with lower mortality, and predicted it better than sleep duration. This is an observed association, not proof that regular sleep is the cause.',
+    source: 'Windred et al., 2024, Sleep' },
+  { id: 'journal', feature: 'Journal',
+    claim: 'Across 146 randomised studies, writing about personal thoughts and feelings had a small positive average effect that varied a lot between people. Treat journaling as something to use when it helps, not a duty.',
+    source: 'Frattaroli, 2006, Psychological Bulletin (average r = .075)' },
+];
+export const ev = (id: string) => EVIDENCE.find((e) => e.id === id)!;
