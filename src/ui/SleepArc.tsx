@@ -55,7 +55,7 @@ export function SleepCard({ date, isToday }: { date: ISODate; isToday: boolean }
   const handle = (which: 'bed' | 'wake', P: { x: number; y: number }, v: number) => (
     <g className="handle" role="slider" tabIndex={0} aria-label={which === 'bed' ? 'Bedtime' : 'Wake time'} aria-valuemin={0} aria-valuemax={1080} aria-valuenow={Math.round((which === 'bed' ? pb : pw) * 1080)} aria-valuetext={fmtMin(v)}
       onPointerDown={down(which)} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onKeyDown={key(which)}>
-      <circle cx={P.x} cy={P.y} r="24" fill="transparent" />
+      <circle cx={P.x} cy={P.y} r="30" fill="transparent" />
       <circle className="knob" cx={P.x} cy={P.y} r="13" fill="var(--bg)" stroke="var(--accent)" strokeWidth="2" />
       <g transform={`translate(${P.x - 7} ${P.y - 7}) scale(.58)`} fill="none" stroke="var(--accent)" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" pointerEvents="none">
         {which === 'bed' ? <path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z" /> : <><circle cx="12" cy="12" r="4" /><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" /></>}

@@ -19,10 +19,11 @@ export function Ring({ blocks, now, onOpen, caption }: { blocks: Block[]; now: n
   // Blocks that were not done when first seen "ignite" when they become done.
   const seen = useRef(new Map<string, boolean>());
   const ignite = (b: Block) => { const was = seen.current.get(b.id); seen.current.set(b.id, b.done); return was === false && b.done; };
-  // The accessible name starts with the visible text (WCAG "label in name"), then says what the control does.
+  // The spoken name repeats the visible text, then says what the control does.
   const text = planned.length ? `${done}/${planned.length} blocks done` : '0 tap to plan the day';
   return (
-    <button type="button" className="ring-wrap" onClick={onOpen} aria-label={`${shown} ${text}. Opens the hour-by-hour timeline.`.trim()} style={{ viewTransitionName: 'day-ring' }}>
+    <button type="button" className="ring-wrap" onClick={onOpen} style={{ viewTransitionName: 'day-ring' }}>
+      <span className="sr">{`${shown} ${text}. Opens the hour-by-hour timeline.`.trim()}</span>
       <svg width="260" height="260" viewBox="0 0 260 260" aria-hidden="true" style={{ display: 'block' }}>
         <circle cx={CX} cy={CX} r={R} fill="none" stroke="rgba(255,255,255,0.09)" strokeWidth="10" />
         {now != null && <circle cx={CX} cy={CX} r={R} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="1.5" strokeDasharray={`${(now / 1440) * C} ${C}`} transform={`rotate(-90 ${CX} ${CX})`} />}

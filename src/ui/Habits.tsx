@@ -66,8 +66,8 @@ export function Habits() {
         const isOpen = expanded === h.id;
         const weekDone = week.filter((d) => isDone(h, L[d])).length, need = h.target.kind === 'weekly' ? h.target.perWeek || 1 : 7 - h.restDays.length;
         return (
-          <motion.section layout="position" transition={SPRING} key={h.id} className="card col" aria-label={h.name} style={{ paddingLeft: 8 }}>
-            <div className="row" style={{ gap: 6 }}>
+          <motion.section layout="position" transition={SPRING} key={h.id} className="card col" aria-label={h.name} style={{ padding: '12px 6px' }}>
+            <div className="row" style={{ gap: 6, paddingRight: 10 }}>
               {h.target.kind === 'count'
                 ? <div className="row" style={{ gap: 2 }}>
                     <button type="button" className="icon-btn" aria-label={`One less ${h.target.unit || h.name}`} onClick={() => void setHabitLog(h, today, Math.max(0, (cur || 0) - 1))}>−</button>
@@ -75,8 +75,8 @@ export function Habits() {
                     <button type="button" className="icon-btn on" aria-label={`One more ${h.target.unit || h.name}`} onClick={() => { const full = (cur || 0) + 1 === h.target.count; haptic(full ? 'success' : 'light'); if (full) bump(h.id); void setHabitLog(h, today, (cur || 0) + 1); }}>+</button>
                   </div>
                 : <Check big on={done} label={`${done ? 'Completed' : 'Complete'} today: ${h.name}`} onToggle={(el) => { if (!done) bump(h.id); tickHabit(h, today, cur, el); }} />}
-              <button type="button" className="col grow" style={{ gap: 1, minHeight: 48, justifyContent: 'center' }} aria-expanded={isOpen} aria-label={`${h.name}. ${isOpen ? 'Hide' : 'Show'} details`} onClick={() => setExpanded(isOpen ? null : h.id)}>
-                <span style={{ fontFamily: 'var(--f-head)', fontSize: '1.0625rem', fontWeight: 500, overflowWrap: 'anywhere' }}>{h.name}</span>
+              <button type="button" className="col grow" style={{ gap: 1, minHeight: 48, justifyContent: 'center' }} aria-expanded={isOpen} onClick={() => setExpanded(isOpen ? null : h.id)}>
+                <span style={{ fontFamily: 'var(--f-head)', fontSize: '1.0625rem', fontWeight: 500, overflowWrap: 'anywhere' }}>{h.name}<span className="sr"> details.</span></span>
                 <span className="small muted">{h.cue || (h.target.kind === 'weekly' ? `${h.target.perWeek}× a week` : h.target.kind === 'count' ? `${h.target.count} ${h.target.unit || ''} a day` : 'Every day')}</span>
               </button>
               <MiniRing value={weekDone / need} size={36} label={`${weekDone} of ${need} this week`} />
@@ -85,13 +85,13 @@ export function Habits() {
                 <span className="label" style={{ letterSpacing: '.04em' }}>{h.target.kind === 'weekly' ? 'weeks' : 'streak'}</span>
               </div>
             </div>
-            <div className="dots" role="group" aria-label={`${h.name} this week`} style={{ paddingLeft: 8 }}>
+            <div className="dots" role="group" aria-label={`${h.name} this week`}>
               {week.map((d, i) => { const on = isDone(h, L[d]), rest = h.target.kind !== 'weekly' && !isDue(h, d) && d >= h.createdOn; return (
                 <button type="button" key={d} disabled={d > today} role="checkbox" aria-checked={on} aria-label={`${DOW[i]}${rest ? ', rest day' : ''}`} className={`${on ? 'on' : ''}${rest ? ' rest' : ''}${d === today ? ' today' : ''}`}
                   onClick={(e) => { if (!on && d === today) bump(h.id); tickHabit(h, d, L[d], e.currentTarget.querySelector('i')); }}>{DOW[i][0]}<i /></button>); })}
             </div>
             <AnimatePresence initial={false}>
-              {isOpen && <motion.div className="col" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={SPRING} style={{ overflow: 'hidden', paddingLeft: 8 }}>
+              {isOpen && <motion.div className="col" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} transition={SPRING} style={{ overflow: 'hidden', padding: '0 10px' }}>
                 <div className="row" style={{ gap: 24 }}>
                   <div className="col" style={{ gap: 0 }}><span className="big-num" style={{ fontSize: '1.875rem' }}>{cons == null ? '—' : <><Count value={Math.round(cons * 100)} />%</>}</span><span className="label">done, last 4 weeks</span></div>
                   <div className="col" style={{ gap: 0 }}><span className="big-num" style={{ fontSize: '1.875rem' }}>{daysBetween(h.createdOn, today) + 1}</span><span className="label">days in</span></div>

@@ -73,7 +73,7 @@ p{margin:0}
 .input:focus{border-color:var(--accent)}
 textarea.input{resize:none;line-height:1.5;display:block}
 .input::placeholder,.bare-input::placeholder{color:var(--muted);opacity:1}
-.bare-input{background:none;border:0;width:100%;padding:8px 0;min-height:44px;resize:none;line-height:1.4;display:block}
+.bare-input{background:none;border:0;width:100%;padding:10px 0;min-height:48px;resize:none;line-height:1.4;display:block}
 .switch{appearance:none;width:52px;height:32px;border-radius:16px;border:1px solid var(--line-2);background:var(--surface-2);position:relative;flex:none;cursor:pointer;margin:8px 0;transition:background .2s}
 .switch::after{content:'';position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:50%;background:var(--muted);transition:transform .25s var(--ease),background .2s}
 .switch:checked{background:var(--a22);border-color:var(--accent)}
@@ -121,7 +121,7 @@ textarea.input{resize:none;line-height:1.5;display:block}
 .toast button{color:var(--accent);font-weight:600;min-height:48px;min-width:48px;padding:0 10px;text-decoration:underline;text-underline-offset:3px}
 
 /* ring */
-.ring-wrap{position:relative;width:260px;height:260px;align-self:center;border-radius:50%;flex:none}
+.ring-wrap{position:relative;width:260px;height:260px;align-self:center;border-radius:50%;flex:none;overflow:clip}
 .ring-center{position:absolute;inset:34px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;pointer-events:none;text-align:center;overflow:hidden;border-radius:50%}
 .big-num{font-family:var(--f-head);font-size:min(3.1rem,66px);font-weight:600;line-height:1;letter-spacing:-.02em;display:inline-flex;align-items:baseline}
 .roll{display:inline-block;position:relative;overflow:hidden;height:1em;line-height:1}
@@ -177,7 +177,8 @@ textarea.input{resize:none;line-height:1.5;display:block}
 .heat i.on::after{content:'';position:absolute;inset:3px;border-radius:50%;background:var(--ink)}
 .heat i.rest{background:rgba(255,255,255,.025)}.heat i.future{background:transparent}
 .heat i.now{outline:1px solid #fff}
-.dots{display:flex;gap:4px}
+.dots{display:flex;gap:0}
+.dots button+button{margin-left:-1px}
 .dots button{flex:1;min-height:52px;border-radius:12px;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:var(--f-mono);font-size:.75rem;color:var(--muted)}
 .dots button i{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:9px;line-height:1;color:var(--ink)}
 .dots button.on{border-color:var(--a50);color:var(--accent)}
@@ -189,8 +190,8 @@ textarea.input{resize:none;line-height:1.5;display:block}
 .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:3px;position:relative}
 .seg button{flex:1;min-height:44px;border-radius:22px;font-size:.9375rem;font-weight:500;color:var(--muted);position:relative;z-index:1;text-align:center;padding:2px 6px}
 .seg button::after{content:'';position:absolute;inset:-5px 0}
-.seg button[aria-pressed=true]{color:var(--ink);font-weight:600}
-.seg .thumb{position:absolute;inset:0;border-radius:22px;background:var(--accent);z-index:-1}
+.seg button[aria-pressed=true]{color:var(--accent);font-weight:600}
+.seg .seg-pill{position:absolute;left:3px;top:3px;bottom:3px;border-radius:22px;background:var(--a22);border:1px solid var(--accent);transition:transform .38s var(--ease)}
 .note{font-size:.875rem;color:var(--muted);background:rgba(255,255,255,.03);border-radius:var(--r-m);padding:12px 14px;border:1px dashed var(--line-2)}
 .empty{color:var(--muted);font-size:.9375rem;text-align:center;padding:16px 8px}
 

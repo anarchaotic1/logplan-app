@@ -151,8 +151,8 @@ function Setup() {
     <section className="col" style={{ gap: 8 }} aria-label="Countdowns"><div className="head"><h2 className="label" style={{ fontWeight: 400 }}>Countdowns</h2><button type="button" className="chip plain" onClick={() => open('countdown')}><Icon name="plus" size={16} />Add</button></div>
       {countdowns.length === 0 && <p className="empty">Exams, deadlines, trips. They show on the calendar and on the days before.</p>}
       {countdowns.length > 0 && <div className="card tight sep" style={{ paddingLeft: 12 }}>{countdowns.map((c) => { const n = daysBetween(today, c.target); return (
-        <button type="button" key={c.id} className="row between" style={{ width: '100%', minHeight: 52 }} aria-label={`Edit countdown ${c.label}`} onClick={() => open('countdown', { id: c.id })}>
-          <span style={{ overflowWrap: 'anywhere' }}>{c.label}</span><span className={`mono small ${n >= 0 && n <= 7 ? 'accent' : 'muted'}`} style={{ whiteSpace: 'nowrap' }}>{n > 0 ? `${n} days` : n === 0 ? 'today' : `${-n}d ago`}</span></button>); })}</div>}
+        <button type="button" key={c.id} className="row between" style={{ width: '100%', minHeight: 52 }} onClick={() => open('countdown', { id: c.id })}>
+          <span style={{ overflowWrap: 'anywhere' }}><span className="sr">Edit countdown </span>{c.label}</span><span className={`mono small ${n >= 0 && n <= 7 ? 'accent' : 'muted'}`} style={{ whiteSpace: 'nowrap' }}>{n > 0 ? `${n} days` : n === 0 ? 'today' : `${-n}d ago`}</span></button>); })}</div>}
     </section>
     <section className="col" style={{ gap: 8 }} aria-label="Day templates"><h2 className="label" style={{ fontWeight: 400 }}>Day templates</h2>
       <form className="row" onSubmit={async (e) => { e.preventDefault(); const name = tname.trim(); if (!name) return; const n = await saveDayAsTemplate(name, date); if (n) { setTname(''); say(`Saved "${name}" with ${n} blocks.`); } else say(`${label === 'today' ? 'Today' : label} has no blocks to save.`); }}>

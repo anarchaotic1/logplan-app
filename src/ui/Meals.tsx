@@ -73,9 +73,9 @@ export function Meals() {
       {date !== today && <button type="button" className="chip on plain" style={{ alignSelf: 'flex-start' }} onClick={() => setDate(today)}>Back to today</button>}
 
       <form className="card col" aria-label="Add a meal" onSubmit={(e) => { e.preventDefault(); void add(name); }}>
-        <div className="row" style={{ alignItems: 'flex-end' }}>
-          <label className="field" style={{ width: 118, flex: 'none' }}><span>Time</span><input className="input" type="time" value={fmtMin(time)} onChange={(e) => e.target.value && setTime(parseHM(e.target.value))} /></label>
-          <label className="field grow"><span>What did you eat?</span><input className="input" value={name} onChange={(e) => setName(e.target.value)} enterKeyHint="done" /></label>
+        <div className="row wrap" style={{ alignItems: 'flex-end' }}>
+          <label className="field" style={{ width: 'min(8.75rem, 100%)', flex: 'none' }}><span>Time</span><input className="input" type="time" value={fmtMin(time)} onChange={(e) => e.target.value && setTime(parseHM(e.target.value))} /></label>
+          <label className="field" style={{ flex: '1 1 9rem', minWidth: 0 }}><span>What did you eat?</span><input className="input" value={name} onChange={(e) => setName(e.target.value)} enterKeyHint="done" /></label>
         </div>
         <div className="chips" role="group" aria-label="Meal type">{TAGS.map((t) => <button type="button" key={t} className={`chip${theTag === t ? ' on' : ''}`} aria-pressed={theTag === t} onClick={() => setTag(t)}>{t}</button>)}</div>
         <button type="submit" className="btn primary block" disabled={!name.trim()}>Add meal</button>

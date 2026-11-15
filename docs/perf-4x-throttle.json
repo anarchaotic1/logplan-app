@@ -1,101 +1,150 @@
-[
-  {
-    "name": "Open Today: ring sweep",
-    "frames": 108,
-    "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 66.6,
-    "over33ms": 2,
-    "avgFps": 56.8
-  },
-  {
-    "name": "Ring to timeline (shared-element zoom)",
-    "frames": 148,
-    "medianMs": 16.7,
-    "p95Ms": 33.3,
-    "worstMs": 83.4,
-    "over33ms": 2,
-    "avgFps": 54.1
-  },
-  {
-    "name": "Complete a block (check draws, block brightens)",
-    "frames": 178,
-    "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 16.8,
-    "over33ms": 0,
-    "avgFps": 60.3
-  },
-  {
-    "name": "Open block sheet",
-    "frames": 59,
-    "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 66.6,
-    "over33ms": 1,
-    "avgFps": 56.2
-  },
-  {
-    "name": "Tab switch: Today to Habits",
-    "frames": 77,
-    "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 50,
-    "over33ms": 1,
-    "avgFps": 57
-  },
-  {
-    "name": "Habit detail expand (curve draws)",
-    "frames": 76,
-    "medianMs": 16.7,
-    "p95Ms": 16.7,
-    "worstMs": 83.3,
-    "over33ms": 1,
-    "avgFps": 57
-  },
-  {
-    "name": "Heatmap ripple",
-    "frames": 75,
-    "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 33.4,
-    "over33ms": 2,
-    "avgFps": 57.7
-  },
-  {
-    "name": "Tab switch: Habits to Insights (bars and line draw)",
-    "frames": 68,
-    "medianMs": 16.7,
-    "p95Ms": 49.9,
-    "worstMs": 50.1,
-    "over33ms": 4,
-    "avgFps": 53
-  },
-  {
-    "name": "Open year orbit (53 nodes)",
-    "frames": 91,
-    "medianMs": 16.7,
-    "p95Ms": 16.8,
-    "worstMs": 116.6,
-    "over33ms": 4,
-    "avgFps": 54.1
-  },
-  {
-    "name": "Weekly review ceremony",
-    "frames": 148,
-    "medianMs": 16.7,
-    "p95Ms": 16.7,
-    "worstMs": 16.8,
-    "over33ms": 0,
-    "avgFps": 60
-  },
-  {
-    "name": "Idle Today screen (ambient stars only)",
-    "frames": 238,
-    "medianMs": 16.7,
-    "p95Ms": 16.7,
-    "worstMs": 16.8,
-    "over33ms": 0,
-    "avgFps": 60
+{
+  "note": "Desktop Chrome, headless, no GPU. Interface animations: CPU throttled 4x, background as a still frame.",
+  "animations": [
+    {
+      "name": "Open Today: ring sweeps to now, numerals roll",
+      "frames": 115,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "worstMs": 50.1,
+      "over33ms": 2,
+      "avgFps": 57.5
+    },
+    {
+      "name": "One-tap completion: check draws, arc ignites, sparks",
+      "frames": 67,
+      "medianMs": 16.7,
+      "p95Ms": 33.4,
+      "worstMs": 166.7,
+      "over33ms": 3,
+      "avgFps": 46.7
+    },
+    {
+      "name": "Swipe right to complete (spring, rubber band)",
+      "frames": 91,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "worstMs": 116.7,
+      "over33ms": 2,
+      "avgFps": 53.5
+    },
+    {
+      "name": "Day change: slide with parallax",
+      "frames": 64,
+      "medianMs": 16.7,
+      "p95Ms": 33.3,
+      "worstMs": 150,
+      "over33ms": 3,
+      "avgFps": 47.4
+    },
+    {
+      "name": "Ring to hour view (shared element)",
+      "frames": 77,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "worstMs": 100,
+      "over33ms": 1,
+      "avgFps": 55
+    },
+    {
+      "name": "Open the block sheet",
+      "frames": 68,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "worstMs": 83.3,
+      "over33ms": 1,
+      "avgFps": 56.7
+    },
+    {
+      "name": "Sleep arc: drag the wake handle",
+      "frames": 87,
+      "medianMs": 16.7,
+      "p95Ms": 16.7,
+      "worstMs": 16.8,
+      "over33ms": 0,
+      "avgFps": 60
+    },
+    {
+      "name": "Tab change to Calendar: indicator morphs, day rings draw",
+      "frames": 81,
+      "medianMs": 16.7,
+      "p95Ms": 33.3,
+      "worstMs": 166.7,
+      "over33ms": 4,
+      "avgFps": 50.1
+    },
+    {
+      "name": "Calendar: month change with parallax",
+      "frames": 148,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "worstMs": 100.1,
+      "over33ms": 6,
+      "avgFps": 53.5
+    },
+    {
+      "name": "Calendar: ripple, then the cell grows into the day",
+      "frames": 220,
+      "medianMs": 16.7,
+      "p95Ms": 49.9,
+      "worstMs": 133.4,
+      "over33ms": 15,
+      "avgFps": 47.3
+    },
+    {
+      "name": "Calendar: the day shrinks back into its cell",
+      "frames": 63,
+      "medianMs": 16.7,
+      "p95Ms": 33.4,
+      "worstMs": 166.7,
+      "over33ms": 4,
+      "avgFps": 45.5
+    },
+    {
+      "name": "Meal photo: thumbnail grows to full screen",
+      "frames": 72,
+      "medianMs": 16.7,
+      "p95Ms": 16.7,
+      "worstMs": 50.1,
+      "over33ms": 1,
+      "avgFps": 58.4
+    },
+    {
+      "name": "Meal photo: drag down to dismiss",
+      "frames": 194,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "worstMs": 16.8,
+      "over33ms": 0,
+      "avgFps": 60
+    },
+    {
+      "name": "Habit tick: ring fills, year heatmap ripples",
+      "frames": 84,
+      "medianMs": 16.7,
+      "p95Ms": 33.3,
+      "worstMs": 83.3,
+      "over33ms": 1,
+      "avgFps": 54.2
+    },
+    {
+      "name": "Idle Today, still background",
+      "frames": 238,
+      "medianMs": 16.7,
+      "p95Ms": 16.8,
+      "worstMs": 16.8,
+      "over33ms": 0,
+      "avgFps": 60
+    }
+  ],
+  "shader": {
+    "name": "Live supernova shader, software WebGL, no throttle (not representative of a phone GPU)",
+    "frames": 26,
+    "medianMs": 99.9,
+    "p95Ms": 100.1,
+    "worstMs": 116.7,
+    "over33ms": 26,
+    "avgFps": 10.8,
+    "mode": "live"
   }
-]
+}

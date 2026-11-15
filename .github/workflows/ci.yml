@@ -3,7 +3,7 @@ name: Test and build
 on:
   workflow_dispatch:
   push:
-    branches: [main, v2-rebuild]
+    branches: [main, v2-rebuild, v2-redesign]
     tags: ['v*']
   pull_request:
 
@@ -23,7 +23,7 @@ jobs:
       - name: Type-check and build the web app
         run: npm run build
       - name: Browser tests (phone, laptop, reduced motion)
-        run: npx playwright test app pwa import
+        run: npm run e2e
       - uses: actions/upload-artifact@v4
         with: { name: logplan-web, path: dist }
 

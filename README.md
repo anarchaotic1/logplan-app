@@ -1,6 +1,6 @@
-# Log/Plan v2
+# Log/Plan v2.1
 
-A local-first daily planner, per-day journal and habit system. One codebase builds the Android app
+A local-first app for daily planning and tracking. One codebase builds the Android app
 (`com.hari.logplan`) and the laptop version (an installable web app). Data lives on the device in
 IndexedDB and works offline. Optional sync goes through your own Google Drive, encrypted on the
 device before upload.
@@ -9,18 +9,50 @@ Screenshots of every screen are in [`docs/screenshots`](docs/screenshots).
 
 ## What is in the app
 
+Four tabs and a quick-capture button. Settings opens from the gear in the Today header.
+
 | Tab | What it does |
 | --- | --- |
-| **Today** | 24-hour ring with one arc per block, a detailed timeline, "today's one thing", up next with cues, to-dos with carry-over, a focus timer that records actual duration, countdowns. |
-| **Journal** | Morning intention, sleep times, mood and energy, free writing, a rotating evening prompt (win, lesson, if-then), tags, photos, meals, full-text search, a look back at earlier entries. |
-| **Habits** | A cue for every habit, daily / per-week / count targets, rest days, a forgiving streak, 4-week consistency, a modelled automaticity curve, a 26-week heatmap. |
-| **Insights** | Plan adherence, most reliable hours, planned-versus-actual factor, habits that go with good days, sleep regularity, weekly activity minutes. Computed on the device; each figure shows how much data it rests on. |
-| **Plan** | Week and month views, the year orbit, a guided weekly review, study topics with spaced recall, day templates, repeating blocks, countdowns. |
+| **Today** | 24-hour ring with one arc per block, the block list and an hour-by-hour view, to-dos with carry-over, the morning intention, habit ticks, sleep (drag the moon and sun handles, or type the times), countdowns. Swipe the date line or use the arrows to move to another day. |
+| **Calendar** | A month grid with a completion ring per day and marks for meals, sleep and countdowns. Tap a day to open it in full and edit anything. One search box finds blocks, to-dos, meals and intentions on any day. **Setup** (countdowns, day templates, repeating blocks and to-dos, day-start hour, categories) is the second segment at the top. |
+| **Meals** | Meals for the day with a time and a kind, favourites that add with one tap, and photos from the camera or gallery. |
+| **Habits** | A tick for today, the week strip, a forgiving streak (one missed day does not end it), 4-week consistency and a year heatmap. |
 
-Quick capture (the round button, or `N` on a laptop) adds a to-do, block, journal line or habit tick.
+**Completing things takes one tap.** Every block and to-do has its own check. You can also swipe a
+row to the right, or on a laptop press `X` on a focused row (or `Space` on its title). Every
+completion and every delete can be undone from the notice that appears.
 
-Every research claim the app makes is in [`src/evidence.ts`](src/evidence.ts) with its source, and is
-shown in Settings. The wording is modest on purpose: these are averages from studies, not promises.
+Quick capture is the round button, or `N` on a laptop. Other keys: `1`–`4` change tab, `T` goes to
+today, `←` `→` change day, `/` searches.
+
+### Changed from v2.0
+
+The Journal, Insights and Plan tabs, the weekly review, study mode, the year orbit and the "Why this
+works" notes are no longer in the interface. **Nothing was deleted:** journal text, mood, tags,
+weekly reviews and study topics written in v2.0 stay in the database, in backups and in sync
+(`tests/upgrade.test.ts` and `e2e/upgrade.spec.ts` check this). v2.1 installs over v2.0 and keeps
+all data.
+
+### Look and motion
+
+Near-black theme with one accent, ember amber. The accent is a single token: change `--accent` at the
+top of `src/styles.css` and every tint, glow and the background follow. `docs/palette-options.png`
+shows the three candidates on the real Today screen (`npm run palette` redraws it).
+
+The background is one WebGL2 shader, a slow supernova: a core, faint filaments, thin rings and a few
+drifting particles. The core brightens as the day gets done, and completing something sends a ring
+out from the check you tapped. It runs at about half resolution and 30 frames a second, pauses when
+the app is hidden, and falls back by itself to a still frame if the device cannot keep up, or to a
+plain gradient without WebGL2. Its brightness has a hard ceiling so text stays readable over it.
+
+### Accessibility
+
+- Settings has **Motion** (follow phone / reduced / full), **Haptics** and **Large text**. Reduced motion replaces movement with short fades and holds the background still.
+- Controls are at least 48 px, body text is 16 px, and nothing is smaller than 12 px. Layout is tested at 200% text and 400% zoom.
+- Every control has a name; sheets trap focus and give it back; Escape and the Android back button close them; completions, undo and saves are announced to screen readers.
+- Gestures always have a button: the check for swiping, typed times for the sleep arc, a close button for the photo viewer.
+- `npm run e2e` runs axe on every screen at phone and laptop size and fails on serious or critical findings. It also measures text contrast over the brightest pixel of the background.
+- Not tested: TalkBack on a real phone.
 
 ## Moving from v1 to v2
 
@@ -50,16 +82,17 @@ Requirements: Node 22+.
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # unit tests (migration, merge, crypto, dates, habits, sync, contrast)
+npm test           # unit tests (migration, upgrade from v2.0, merge, crypto, dates, habits, sync, photos, search, contrast)
 npm run build      # type-check and build to dist/
 npm run e2e        # browser tests at phone and laptop size (needs Google Chrome)
 npm run perf       # frame timings of the main animations under 4x CPU throttling
+npm run palette    # redraws docs/palette-options.png
 ```
 
 `npm run e2e` uses the installed Google Chrome. To use another Chromium, set `CHROME_PATH`.
 
 Code map: `src/lib` is plain TypeScript with tests (`migrate`, `merge`, `sync`, `crypto`, `dates`,
-`habits`, `insights`, `notif`, `spaced`, `hlc`, `db`). `src/ui` holds the screens. `legacy/v1` is the
+`habits`, `notif`, `photos`, `search`, `day`, `nova`, `hlc`, `db`). `src/ui` holds the screens. `legacy/v1` is the
 old single-file app, kept for reference.
 
 ## The four things only you can do
@@ -110,7 +143,9 @@ edit wins, and deletes sync too. Files are split by month so a sync only moves w
 **If you forget the passphrase and lose the recovery key, the copy in Drive cannot be recovered by
 anyone.** The data on your devices is not affected; you can disconnect, and set sync up again.
 
-Not synced: journal photos (they stay on the device where you added them) and settings.
+Meal photos are downscaled to 1280 px when added and sync too, each as its own encrypted file, a few
+per sync. Uploading stops once a device holds more than 500 MB of photos; Settings shows how much
+space photos use. Backups (Settings → Export) include the photos. Not synced: settings.
 
 ### 4. GitHub Pages (laptop version)
 
@@ -120,7 +155,7 @@ It works offline after the first visit.
 
 ## Build the Android app
 
-**On GitHub (no local setup):** push to `main` or `v2-rebuild`, or run the *Test and build* workflow by
+**On GitHub (no local setup):** push to `main`, `v2-rebuild` or `v2-redesign`, or run the *Test and build* workflow by
 hand. It runs the tests, builds a signed release APK, and uploads it as the artifact
 `logplan-release-apk`. The version code is `200000 + run number`, so each build is newer than the last.
 
@@ -147,7 +182,8 @@ After changing the icon source in `scripts/make-assets.mjs`, run `npm run assets
   one notice says so. On Android 12+, on-time delivery needs the "Alarms & reminders" setting; Settings
   in the app shows a button when it is off. Without it reminders still arrive, possibly a few minutes late.
 - **App lock:** Settings → Privacy uses the fingerprint or the screen lock.
-- **Back button:** closes an open sheet, then returns to Today, then leaves the app.
+- **Back button:** closes a photo, a sheet or an opened calendar day, then returns to Today, then leaves the app.
+- **Photos:** camera and gallery use the system picker, so the app needs no camera or storage permission.
 - **Portrait only** on the phone. The laptop version is the web build.
 - Built with Capacitor 8 (min Android 7.0, API 24).
 
@@ -155,4 +191,5 @@ After changing the icon source in `scripts/make-assets.mjs`, run `npm run assets
 
 - Sync has no server-side locking. If two devices upload the same month at the same instant, the next sync on either device repairs it (covered by a test).
 - Deletes are remembered for 180 days. A device that stays offline longer than that could bring a deleted item back.
-- Insights are correlations in your own data, not causes.
+- The week starts on Monday.
+- Performance figures in `docs/perf-4x-throttle.json` come from desktop Chrome with the CPU slowed 4x, not from a phone.

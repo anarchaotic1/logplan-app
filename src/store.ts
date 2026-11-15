@@ -35,6 +35,7 @@ export function transition(fn: () => void) {
   d.startViewTransition(() => flushSync(fn));
 }
 const monthOf = (d: ISODate) => `${d.slice(0, 7)}-01`;
+let opener: HTMLElement | null = null;
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 export const useApp = create<State>((set, get) => ({
   tab: 'today', date: isoDate(new Date()), dir: 0, calDay: null, calMonth: monthOf(isoDate(new Date())), viewer: null,
@@ -42,8 +43,9 @@ export const useApp = create<State>((set, get) => ({
   setTab: (tab) => { if (tab !== get().tab) transition(() => set({ tab })); },
   setDate: (date) => set({ date, dir: date > get().date ? 1 : date < get().date ? -1 : 0 }),
   setCalDay: (calDay) => set(calDay ? { calDay, dir: calDay > (get().calDay || calDay) ? 1 : calDay < (get().calDay || calDay) ? -1 : 0, calMonth: monthOf(calDay) } : { calDay }),
-  open: (kind, props) => set({ sheet: { kind, props } }),
-  close: () => set({ sheet: null }),
+  // The control that opened a sheet gets focus back when the sheet closes (it may be hidden while the sheet is up).
+  open: (kind, props) => { if (!get().sheet) opener = document.activeElement as HTMLElement | null; set({ sheet: { kind, props } }); },
+  close: () => { set({ sheet: null }); const el = opener; opener = null; requestAnimationFrame(() => { if (el?.isConnected && !get().sheet) el.focus({ preventScroll: true }); }); },
   say: (text, action) => {
     clearTimeout(toastTimer);
     const id = Date.now();

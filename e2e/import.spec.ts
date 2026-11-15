@@ -10,14 +10,19 @@ test('imports a v1 backup file through Settings', async ({ page }) => {
     'app-habits': JSON.stringify({ habits: [{ id: 'gym', name: 'Gym' }], log: { '2026-11-13': { gym: true } } }),
     'app-gh-token': 'ghp_SHOULD_NOT_BE_KEPT',
   } };
-  await page.clock.install({ time: new Date(2026, 10, 14, 14, 20) });
+  await page.clock.setFixedTime(new Date(2026, 10, 14, 14, 20));
   await page.goto('/');
-  page.on('dialog', (d) => void d.accept());
   await page.getByRole('button', { name: 'Settings' }).click();
   await page.locator('input[type=file][accept*=json]').setInputFiles({ name: 'logplan-backup-2026-11-13.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
-  await expect(page.getByRole('status').filter({ hasText: 'Imported 4 items from v1' })).toBeVisible();
+  // The app asks in the page (no browser dialog), and imports only after "Import" is pressed.
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Import' }).click();
+  await expect(page.locator('.toast-zone')).toContainText('Imported 4 items from v1');
   await expect(page.getByTestId('migration')).toContainText('1 blocks');
   await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
   await expect(page.locator('#main').getByRole('button', { name: /1\/1 blocks done/ })).toBeVisible();
-  await expect(page.locator('#main').getByRole('button', { name: 'Imported to-do' })).toBeVisible();
+  await expect(page.locator('#main').getByRole('button', { name: 'Edit to-do Imported to-do' })).toBeVisible();
+  // The old token never enters v2.
+  const kept = await page.evaluate(async () => { const db: IDBDatabase = await new Promise((res) => { const r = indexedDB.open('logplan-v2'); r.onsuccess = () => res(r.result); });
+    const all: any[] = await new Promise((res) => { const r = db.transaction('kv').objectStore('kv').getAll(); r.onsuccess = () => res(r.result); }); return JSON.stringify(all); });
+  expect(kept).not.toContain('ghp_');
 });

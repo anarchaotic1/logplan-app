@@ -174,7 +174,8 @@ export function App() {
         </main>
         {wide && <Glance />}
         {!wide && <nav className="nav" aria-label="Sections">{tabs('nav')}</nav>}
-        {!sheet && <button type="button" className="fab" aria-label="Quick capture" onClick={() => open('capture')}><Icon name="plus" size={24} /></button>}
+        {/* Kept mounted while a sheet is open, so focus can return to it when the sheet closes. */}
+        <button type="button" className="fab" aria-label="Quick capture" style={sheet ? { display: 'none' } : undefined} onClick={() => open('capture')}><Icon name="plus" size={24} /></button>
       </div>
       <Sheets />
       <PhotoViewer />

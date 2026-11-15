@@ -1,7 +1,7 @@
 /** The supernova background: one fragment shader. Everything is computed in linear light and then compressed so
  *  that no pixel can exceed LUMA_CAP (relative luminance). That ceiling is what keeps text readable wherever it
  *  scrolls: tests/contrast.test.ts checks text colours against a background pixel at the cap. */
-export const LUMA_CAP = 0.034;
+export const LUMA_CAP = 0.024;
 export const MAX_PULSES = 4;
 export const PULSE_LIFE = 1.6;
 

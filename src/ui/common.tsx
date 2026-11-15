@@ -69,14 +69,13 @@ export function SwipeRow({ onCommit, children }: { onCommit: (el: HTMLElement | 
   );
 }
 const FOCUSABLE = 'button:not([disabled]),[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
-/** Modal sheet: traps focus, closes on Escape, and gives focus back to what opened it. */
+/** Modal sheet: traps focus and closes on Escape. The store gives focus back to what opened it. */
 export function Sheet({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: ReactNode }) {
   const reduce = useReduce();
   const ref = useRef<HTMLDivElement>(null);
   const drag = useDragControls();
   useEffect(() => {
     if (!open) return;
-    const prev = document.activeElement as HTMLElement | null;
     const key = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { onClose(); return; }
       if (e.key !== 'Tab' || !ref.current) return;
@@ -88,7 +87,7 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
     };
     document.addEventListener('keydown', key);
     requestAnimationFrame(() => { if (ref.current && !ref.current.contains(document.activeElement)) ref.current.focus(); });
-    return () => { document.removeEventListener('keydown', key); prev?.focus?.(); };
+    return () => document.removeEventListener('keydown', key); // focus goes back to the opener in the store's close()
   }, [open, onClose]);
   return (
     <AnimatePresence>
@@ -109,15 +108,13 @@ export function Sheet({ open, onClose, title, children }: { open: boolean; onClo
     </AnimatePresence>
   );
 }
+/** Segmented choice. The thumb is one element that slides with a transform, so it cannot be mis-measured mid-transition. */
 export function Seg<T extends string>({ value, options, onChange, label }: { value: T; options: { v: T; l: string }[]; onChange: (v: T) => void; label: string }) {
+  const i = Math.max(0, options.findIndex((o) => o.v === value));
   return (
     <div className="seg" role="group" aria-label={label}>
-      {options.map((o) => (
-        <button key={o.v} type="button" aria-pressed={o.v === value} onClick={() => { haptic(); onChange(o.v); }}>
-          {o.v === value && <motion.span layoutId={`seg-${label}`} className="thumb" transition={SPRING} />}
-          {o.l}
-        </button>
-      ))}
+      <span className="seg-pill" aria-hidden="true" style={{ width: `calc((100% - 6px) / ${options.length})`, transform: `translateX(${i * 100}%)` }} />
+      {options.map((o) => <button key={o.v} type="button" aria-pressed={o.v === value} onClick={() => { haptic(); onChange(o.v); }}>{o.l}</button>)}
     </div>
   );
 }

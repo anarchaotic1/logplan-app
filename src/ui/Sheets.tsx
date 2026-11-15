@@ -30,7 +30,7 @@ function BlockSheet({ id, fresh }: { id: string; fresh?: boolean }) {
   const focus = useLive(getFocus, [], null);
   const titleRef = useRef<HTMLInputElement>(null);
   const [repeat, setRepeat] = useState(false);
-  useEffect(() => { if (fresh) setTimeout(() => titleRef.current?.focus(), 250); }, [fresh]);
+  useEffect(() => { if (fresh) setTimeout(() => { if (useApp.getState().sheet) titleRef.current?.focus(); }, 250); }, [fresh]);
   // A new block that was never given any text is discarded when the sheet closes.
   useEffect(() => () => { void db.rec.get(id).then((r) => { const x = r as Block | undefined; if (x && !x.deleted && !x.title.trim() && !x.log.trim()) void db.rec.delete(id); }); }, [id]);
   if (!b || b.deleted) return null;
@@ -125,7 +125,7 @@ function CaptureSheet({ mode: initial, date: forDate }: { mode?: Mode; date?: IS
   const logs = useLive(() => byTypeDate<HabitLog>('habitLog', date), [date], []);
   const favs = useLive(() => byType<MealCat>('mealCat'), [], []);
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => { const t = setTimeout(() => ref.current?.focus(), 250); return () => clearTimeout(t); }, [mode]);
+  useEffect(() => { const t = setTimeout(() => { if (useApp.getState().sheet) ref.current?.focus(); }, 250); return () => clearTimeout(t); }, [mode]);
   const where = date === today ? 'today' : date;
   const submit = async (v = text.trim()) => {
     if (!v) return;
@@ -145,9 +145,9 @@ function CaptureSheet({ mode: initial, date: forDate }: { mode?: Mode; date?: IS
     ) : (
       <form className="col" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
         <input ref={ref} className="input" aria-label={mode === 'todo' ? 'New to-do' : mode === 'block' ? 'New block title' : 'What did you eat?'} placeholder={mode === 'todo' ? 'What needs doing?' : mode === 'block' ? 'What will you do?' : 'What did you eat?'} value={text} onChange={(e) => setText(e.target.value)} enterKeyHint="done" />
-        {mode === 'block' && <div className="row" style={{ alignItems: 'flex-start' }}>
-          <label className="field" style={{ width: 118, flex: 'none' }}><span>Start</span><Time label="Start time" value={start} onChange={(v) => v != null && setStart(snap15(v))} /></label>
-          <div className="field grow"><span>Length</span><div className="chips" role="group" aria-label="Length">{[30, 60, 90].map((d) => <button type="button" key={d} className={`chip${dur === d ? ' on' : ''}`} aria-pressed={dur === d} onClick={() => setDur(d)}>{fmtDur(d)}</button>)}</div></div>
+        {mode === 'block' && <div className="row wrap" style={{ alignItems: 'flex-start' }}>
+          <label className="field" style={{ width: 'min(8.75rem, 100%)', flex: 'none' }}><span>Start</span><Time label="Start time" value={start} onChange={(v) => v != null && setStart(snap15(v))} /></label>
+          <div className="field" style={{ flex: '1 1 9rem', minWidth: 0 }}><span>Length</span><div className="chips" role="group" aria-label="Length">{[30, 60, 90].map((d) => <button type="button" key={d} className={`chip${dur === d ? ' on' : ''}`} aria-pressed={dur === d} onClick={() => setDur(d)}>{fmtDur(d)}</button>)}</div></div>
         </div>}
         {mode === 'meal' && favs.length > 0 && <div className="chips" role="group" aria-label="Favourites">{favs.map((c) => <button type="button" key={c.id} className="chip plain" onClick={() => void submit(c.name)}><Icon name="plus" size={14} />{c.name}</button>)}</div>}
         <button type="submit" className="btn primary block" disabled={!text.trim()}>Add</button>

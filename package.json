@@ -11,6 +11,7 @@
     "test": "vitest run",
     "e2e": "playwright test e2e/app.spec.ts e2e/a11y.spec.ts e2e/upgrade.spec.ts e2e/pwa.spec.ts e2e/import.spec.ts",
     "perf": "playwright test e2e/perf.spec.ts --project=phone",
+    "palette": "playwright test e2e/palette.spec.ts --project=phone",
     "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android",
     "android:sync": "npm run build && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease"

@@ -112,8 +112,8 @@ export function DayView({ date, onDate, mode, onBack }: { date: ISODate; onDate:
               <SwipeRow key={b.id} onCommit={(el) => toggleBlock(b, el)}>
                 <Check on={b.done} label={`${b.done ? 'Completed' : 'Complete'}: ${b.title || b.log}`} onToggle={(el) => toggleBlock(b, el)} />
                 <span className="do-time">{fmtMin(b.start)}</span>
-                <button type="button" className="do-title" aria-label={`Edit block ${b.title || b.log}, ${fmtMin(b.start)}, ${fmtDur(b.dur)}`} onClick={() => open('block', { id: b.id })}>
-                  <span className={b.done ? 'struck' : ''} style={{ fontWeight: 500 }}>{b.title || b.log}</span>
+                <button type="button" className="do-title" onClick={() => open('block', { id: b.id })}>
+                  <span className={b.done ? 'struck' : ''} style={{ fontWeight: 500 }}><span className="sr">Edit block </span>{b.title || b.log}</span>
                   <span className="muted small">{[fmtDur(b.dur), b.cat, b.cue].filter(Boolean).join(' · ')}</span>
                 </button>
                 {next?.id === b.id && <span className="tag">{b.start > min ? `next · ${fmtDur(b.start - min)}` : 'now'}</span>}
@@ -131,8 +131,8 @@ export function DayView({ date, onDate, mode, onBack }: { date: ISODate; onDate:
             {rest.map((t) => (
               <SwipeRow key={t.id} onCommit={(el) => toggleTodo(t, el)}>
                 <Check on={t.done} label={`${t.done ? 'Completed' : 'Complete'}: ${t.text}`} onToggle={(el) => toggleTodo(t, el)} />
-                <button type="button" className="do-title" aria-label={`Edit to-do ${t.text}`} onClick={() => open('todo', { id: t.id })}>
-                  <span className={t.done ? 'struck' : ''}>{t.text}</span>
+                <button type="button" className="do-title" onClick={() => open('todo', { id: t.id })}>
+                  <span className={t.done ? 'struck' : ''}><span className="sr">Edit to-do </span>{t.text}</span>
                   {(t.when || t.carriedFrom) && <span className="muted small">{[t.when, t.carriedFrom ? 'carried over' : ''].filter(Boolean).join(' · ')}</span>}
                 </button>
                 {t.time != null && <span className="mono muted small">{fmtMin(t.time)}</span>}
@@ -152,12 +152,11 @@ export function DayView({ date, onDate, mode, onBack }: { date: ISODate; onDate:
               const cur = logs.find((l) => l.habitId === h.id && l.date === date)?.value;
               const on = isDone(h, cur);
               return (
-                <button type="button" key={h.id} className="card row" style={{ padding: '8px 12px', gap: 10, minHeight: 56, borderColor: on ? 'var(--a50)' : undefined, background: on ? 'var(--a08)' : undefined }} role="checkbox" aria-checked={on}
-                  aria-label={`${h.name}: ${on ? 'done' : 'not done'} for this day, ${done} of ${need} this week`} onClick={(e) => tickHabit(h, date, cur, e.currentTarget.querySelector('svg'))}>
+                <button type="button" key={h.id} className="card row" style={{ padding: '8px 12px', gap: 10, minHeight: 56, borderColor: on ? 'var(--a50)' : undefined, background: on ? 'var(--a08)' : undefined }} role="checkbox" aria-checked={on} onClick={(e) => tickHabit(h, date, cur, e.currentTarget.querySelector('svg'))}>
                   <MiniRing value={done / need} />
                   <span className="col grow" style={{ gap: 0 }}>
-                    <span className="clip small" style={{ fontWeight: 500 }}>{h.name}</span>
-                    <span className="mono muted tiny">{on ? '✓ ' : ''}{done}/{need}</span>
+                    <span className="clip small" style={{ fontWeight: 500 }}>{h.name}<span className="sr">, {on ? 'done' : 'not done'} for this day,</span></span>
+                    <span className="mono muted tiny"><span aria-hidden="true">{on ? '✓ ' : ''}</span>{done}/{need}<span className="sr"> this week</span></span>
                   </span>
                 </button>
               );
@@ -249,8 +248,8 @@ function Timeline({ blocks, date, now, startHour, onBack }: { blocks: Block[]; d
           <motion.div layout="position" transition={SPRING} key={b.id} className={`tl-block${b.done ? ' done' : ''}`}
             style={{ top: (b.start / 60) * HOUR + 1, height: Math.max((Math.min(Math.max(b.dur, 30), 1440 - b.start) / 60) * HOUR - 2, 46), left: `calc(54px + ${(lane / of) * 100}% - ${(lane / of) * 54}px)`, width: `calc(${100 / of}% - ${54 / of}px - ${of > 1 ? 4 : 0}px)` }}>
             <Check on={b.done} label={`${b.done ? 'Completed' : 'Complete'}: ${b.title || b.log || 'block'}`} onToggle={(el) => toggleBlock(b, el)} />
-            <button type="button" className="grow" aria-label={`Edit block ${b.title || b.log || 'untitled'}, ${fmtMin(b.start)}, ${fmtDur(b.dur)}`} onClick={() => open('block', { id: b.id })}>
-              <span className={`clip${b.done ? ' struck' : ''}`} style={{ fontWeight: 500 }}>{b.title || b.log || 'Untitled'}</span>
+            <button type="button" className="grow" onClick={() => open('block', { id: b.id })}>
+              <span className={`clip${b.done ? ' struck' : ''}`} style={{ fontWeight: 500 }}><span className="sr">Edit block </span>{b.title || b.log || 'Untitled'}</span>
               {b.dur >= 45 && <span className="muted small clip">{fmtMin(b.start)} · {fmtDur(b.dur)}{b.cue ? ` · ${b.cue}` : ''}</span>}
               {b.dur >= 90 && b.title && b.log && <span className="small clip">{b.log}</span>}
             </button>
