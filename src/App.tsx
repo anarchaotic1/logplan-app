@@ -9,15 +9,17 @@ import { planNotifications } from './lib/notif';
 import { applyNotifications, onBack, onResume, unlock } from './lib/native';
 import { referencedPhotos } from './lib/sync';
 import { useLive, useMedia, useNow, useReduce } from './hooks';
+import { getFocus } from './data';
 import { TABS, transition, useApp, type Tab } from './store';
 import { Check, Icon, SPRING } from './ui/common';
 import { DayView, dateLabel } from './ui/Day';
 import { Calendar } from './ui/Calendar';
-import { Meals, PhotoViewer } from './ui/Meals';
+import { Meals, MealView, PhotoViewer } from './ui/Meals';
 import { Habits } from './ui/Habits';
 import { Sheets } from './ui/Sheets';
 import { MiniRing } from './ui/Ring';
-import { Supernova } from './ui/Supernova';
+import { SkyBackground } from './ui/Sky';
+import { FocusOverlay } from './ui/Focus';
 import { tickHabit, toggleBlock, toggleTodo } from './ui/act';
 
 const LABEL: Record<Tab, string> = { today: 'Today', calendar: 'Calendar', meals: 'Meals', habits: 'Habits' };
@@ -67,17 +69,13 @@ export function App() {
   const tab = useApp((s) => s.tab), setTab = useApp((s) => s.setTab), ready = useApp((s) => s.ready), sheet = useApp((s) => s.sheet), toast = useApp((s) => s.toast), live = useApp((s) => s.live);
   const date = useApp((s) => s.date), setDate = useApp((s) => s.setDate), viewer = useApp((s) => s.viewer);
   const open = useApp((s) => s.open), lock = useApp((s) => s.settings.lock), largeText = useApp((s) => s.settings.largeText);
+  const mealOpen = useApp((s) => s.mealOpen), focusHidden = useApp((s) => s.focusHidden);
+  const focus = useLive(getFocus, [], null);
   const { today } = useNow();
   const reduce = useReduce();
   const wide = useMedia('(min-width: 860px)'), fine = useMedia('(pointer: fine)');
   const [locked, setLocked] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
-  const todayBlocks = useLive(() => byTypeDate<Block>('block', today), [today], []);
-  const todayTodos = useLive(() => byTypeDate<Todo>('todo', today), [today], []);
-  // Background brightness follows what is done today: blocks and to-dos together.
-  const total = todayBlocks.filter((b) => b.title.trim()).length + todayTodos.length;
-  const level = total ? (todayBlocks.filter((b) => b.title.trim() && b.done).length + todayTodos.filter((t) => t.done).length) / total : 0.3;
-
   useEffect(() => { document.documentElement.classList.toggle('rm', reduce); }, [reduce]);
   useEffect(() => { document.documentElement.classList.toggle('lg', largeText); }, [largeText]);
   // App lock: on start and whenever the app returns from the background.
@@ -118,6 +116,8 @@ export function App() {
   useEffect(() => onBack(() => {
     const s = useApp.getState();
     if (s.viewer) { useApp.setState({ viewer: null }); return true; }
+    if (document.querySelector('.eclipse')) { useApp.setState({ focusHidden: true }); return true; }
+    if (s.mealOpen) { useApp.setState({ mealOpen: null }); return true; }
     if (s.sheet) { s.close(); return true; }
     if (s.tab === 'calendar' && s.calDay) { transition(() => s.setCalDay(null)); return true; }
     if (s.tab !== 'today') { s.setTab('today'); return true; }
@@ -136,7 +136,7 @@ export function App() {
       const el = e.target as HTMLElement;
       if (e.metaKey || e.ctrlKey || e.altKey || el.closest('input,textarea,select,[contenteditable],[role=slider]')) return;
       const s = useApp.getState();
-      if (s.sheet || s.viewer) return;
+      if (s.sheet || s.viewer || s.mealOpen || document.querySelector('.eclipse')) return;
       const k = e.key.toLowerCase();
       const stepDay = (n: number) => { if (s.tab === 'calendar' && s.calDay) s.setCalDay(addDays(s.calDay, n)); else if (s.tab !== 'calendar') s.setDate(addDays(s.date, n)); };
       if (k === 'n') { e.preventDefault(); s.open('capture'); }
@@ -149,17 +149,17 @@ export function App() {
     window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key);
   }, [today]);
 
-  if (!ready) return <div className="nova-still" aria-hidden="true" />;
+  if (!ready) return <SkyBackground />;
   const tabs = (cls: string) => TABS.map((t, i) => (
     <button type="button" key={t} className={`tab${tab === t ? ' on' : ''}`} aria-current={tab === t ? 'page' : undefined} onClick={() => setTab(t)}>
       {tab === t && <motion.span layoutId={`pill-${cls}`} className="pill" transition={SPRING} />}
       <Icon name={t} size={22} />{LABEL[t]}{cls === 'side' && <kbd>{i + 1}</kbd>}
     </button>
   ));
-  const modal = locked || !!viewer;
+  const modal = locked || !!viewer || !!mealOpen || (!!focus && !focusHidden);
   return (
     <MotionConfig reducedMotion={reduce ? 'always' : 'never'}>
-      <Supernova level={level} />
+      <SkyBackground />
       <div className="shell" inert={modal || undefined}>
         {wide && <nav className="side" aria-label="Sections">
           <div className="row" style={{ padding: '0 14px 18px', fontFamily: 'var(--f-head)', fontWeight: 600, fontSize: '1.125rem' }}>LOG<span className="muted" style={{ fontWeight: 400 }}>/PLAN</span></div>
@@ -178,6 +178,8 @@ export function App() {
         <button type="button" className="fab" aria-label="Quick capture" style={sheet ? { display: 'none' } : undefined} onClick={() => open('capture')}><Icon name="plus" size={24} /></button>
       </div>
       <Sheets />
+      <MealView />
+      <FocusOverlay />
       <PhotoViewer />
       {/* Always in the page, so screen readers announce what appears inside. */}
       <div className="toast-zone" role="status" aria-live="polite">

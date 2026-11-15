@@ -13,7 +13,7 @@ import { removeWithUndo } from './act';
 import { Icon, Seg, SPRING } from './common';
 import { DayView, longDate } from './Day';
 
-const RR = 14, RC = 2 * Math.PI * RR;
+const RR = 16, RC = 2 * Math.PI * RR;
 const monthName = (d: Date) => d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 let lastPicked: ISODate | null = null;
 const KIND: Record<Hit['kind'], string> = { block: 'Block', todo: 'To-do', meal: 'Meal', intention: 'Intention' };
@@ -52,20 +52,18 @@ function Month() {
   const cdBy = useMemo(() => { const mp = new Map<string, string[]>(); for (const c of countdowns) mp.set(c.target, [...(mp.get(c.target) || []), c.label]); return mp; }, [countdowns]);
 
   const shift = (n: number) => { haptic(); setDir(n); const t = new Date(y, m + n, 1); useApp.setState({ calMonth: `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-01` }); };
-  // A ripple travels across the grid from the tapped day, then that cell grows into the full day view.
-  const openDay = (g: ISODate, i: number) => {
-    haptic();
-    if (!reduce && gridRef.current) {
-      const cells = gridRef.current.children;
-      for (let k = 0; k < cells.length; k++) {
-        const dist = Math.hypot(Math.floor(k / 7) - Math.floor(i / 7), (k % 7) - (i % 7));
-        cells[k].animate([{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(.82)', opacity: 0.5, offset: 0.4 }, { transform: 'scale(1)', opacity: 1 }], { duration: 380, delay: dist * 28, easing: 'cubic-bezier(.22,1,.36,1)' });
-      }
-    }
-    setPicked(g);
-    setTimeout(() => transition(() => setCalDay(g)), reduce ? 0 : 150);
+  const pick = (g: ISODate) => { haptic(); setPicked(g); requestAnimationFrame(() => document.querySelector('.day-card')?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' })); };
+  // Arrow keys move between days, like a grid.
+  const keys = (e: React.KeyboardEvent) => {
+    const step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key];
+    if (!step || !gridRef.current) return;
+    const cells = [...gridRef.current.querySelectorAll<HTMLElement>('.cal-cell')], i = cells.indexOf(document.activeElement as HTMLElement);
+    if (i < 0 || !cells[i + step]) return;
+    e.preventDefault(); e.stopPropagation(); cells[i + step].focus();
   };
-  const enter = reduce || !dir ? { initial: { opacity: 0 }, animate: { opacity: 1 } } : { initial: { opacity: 0, x: dir * 70 }, animate: { opacity: 1, x: 0 } };
+  const sel = picked && grid.includes(picked) ? picked : grid.includes(today) ? today : null;
+  const selBlocks = sel ? blocks.filter((b) => b.date === sel && (b.title.trim() || b.log.trim())).sort((a, b) => a.start - b.start) : [];
+  const selA = sel ? byDay.get(sel) : undefined;
   return <>
     <Search q={q} setQ={setQ} />
     {!q.trim() && <>
@@ -75,20 +73,21 @@ function Month() {
         <button type="button" className="icon-btn" aria-label="Next month" onClick={() => shift(1)}><Icon name="right" /></button>
       </div>
       <div className="cal" aria-hidden="true">{DOW.map((x) => <span key={x} className="label" style={{ textAlign: 'center', letterSpacing: 0 }}>{x.slice(0, 2)}</span>)}</div>
-      <motion.div key={calMonth} {...enter} transition={SPRING} style={{ touchAction: 'pan-y' }} drag={reduce ? false : 'x'} dragDirectionLock dragConstraints={{ left: 0, right: 0 }} dragElastic={0.25} dragSnapToOrigin
+      <motion.div key={calMonth} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} style={{ touchAction: 'pan-y' }} drag={reduce ? false : 'x'} dragDirectionLock dragConstraints={{ left: 0, right: 0 }} dragElastic={0.25} dragSnapToOrigin
         onDragEnd={(_, i) => { if (i.offset.x < -64 || i.velocity.x < -500) shift(1); else if (i.offset.x > 64 || i.velocity.x > 500) shift(-1); }}>
-        <div className="cal" ref={gridRef} role="group" aria-label={monthName(d0)}>
+        <div className="cal" ref={gridRef} role="group" aria-label={monthName(d0)} onKeyDown={keys} style={{ ['--dx' as string]: `${dir * 14}px` }}>
           {grid.map((g, i) => {
             const a = byDay.get(g), hasMeal = mealDays.has(g), hasSleep = sleepDays.has(g), cds = cdBy.get(g);
-            const label = `${longDate(g)}${g === today ? ', today' : ''}. ${a ? `${a.done} of ${a.n} blocks done` : 'No blocks'}${hasMeal ? ', meals logged' : ''}${hasSleep ? ', sleep logged' : ''}${cds ? `, countdown: ${cds.join(', ')}` : ''}.`;
+            const label = `${longDate(g)}${g === today ? ', today' : ''}. ${a ? `${a.done} of ${a.n} blocks done, ${Math.round(a.value * 100)} percent` : 'No blocks'}${hasMeal ? ', meals logged' : ''}${hasSleep ? ', sleep logged' : ''}${cds ? `, countdown: ${cds.join(', ')}` : ''}.`;
             return (
-              <button type="button" key={g} className={`cal-cell${parseISO(g).getMonth() !== m ? ' out' : ''}${g === today ? ' today' : ''}`} aria-label={label} aria-current={g === today ? 'date' : undefined}
-                style={picked === g ? { viewTransitionName: 'cal-day' } : undefined} onClick={() => openDay(g, i)}>
+              <button type="button" key={g} className={`cal-cell${parseISO(g).getMonth() !== m ? ' out' : ''}${g === today ? ' today' : ''}${sel === g ? ' sel' : ''}${a && a.value >= 1 ? ' full' : ''}`} aria-label={label} aria-current={g === today ? 'date' : undefined} aria-pressed={sel === g}
+                style={{ animationDelay: `${((i % 7) + Math.floor(i / 7)) * 50}ms` }} onClick={() => pick(g)}>
                 <span className="ringbox">
-                  <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true">
-                    {a && <circle cx="17" cy="17" r={RR} fill="none" stroke="rgba(255,255,255,.14)" strokeWidth="2.5" />}
-                    {a && a.value > 0 && <circle className="cal-ring" cx="17" cy="17" r={RR} fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeLinecap="round" transform="rotate(-90 17 17)"
-                      strokeDasharray={RC} strokeDashoffset={RC * (1 - a.value)} style={{ ['--c' as string]: RC, animationDelay: `${i * 12}ms` }} />}
+                  <svg width="40" height="40" viewBox="0 0 40 40" aria-hidden="true">
+                    {g === today && <circle className="breathe" cx="20" cy="20" r="19" fill="none" stroke="var(--accent)" strokeWidth="1.2" />}
+                    <circle cx="20" cy="20" r={RR} fill="none" stroke="var(--line)" strokeWidth="3" />
+                    {a && a.value > 0 && <circle className="cal-ring" cx="20" cy="20" r={RR} fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" transform="rotate(-90 20 20)"
+                      strokeDasharray={RC} strokeDashoffset={RC * (1 - a.value)} style={{ ['--c' as string]: RC, animationDelay: `${((i % 7) + Math.floor(i / 7)) * 50}ms` }} />}
                   </svg>
                   <span className="num">{parseISO(g).getDate()}</span>
                 </span>
@@ -99,6 +98,24 @@ function Month() {
           })}
         </div>
       </motion.div>
+      {sel && <section key={sel} className="card col day-card" aria-label={`${longDate(sel)}, summary`} style={{ viewTransitionName: 'cal-day' }}>
+        <div className="row between" style={{ alignItems: 'flex-start' }}>
+          <div className="col" style={{ gap: 0 }}><span className="label">{DOW[(parseISO(sel).getDay() + 6) % 7]}{sel === today ? ' · today' : ''}</span><h2 style={{ fontSize: '1.5rem' }}>{parseISO(sel).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</h2></div>
+          <svg width="96" height="56" viewBox="0 0 120 70" role="img" aria-label={selA ? `${selA.done} of ${selA.n} blocks done` : 'No blocks'}>
+            <g transform="translate(60,35) rotate(-14)">
+              <path d="M-48 0 A48 15 0 0 1 48 0" fill="none" stroke="var(--line)" strokeWidth="3" />
+              <circle r="17" fill="var(--surface-2)" stroke="var(--line)" />
+              <path d="M-48 0 A48 15 0 0 0 48 0" fill="none" stroke="var(--line)" strokeWidth="3" />
+              {selA && selA.value > 0 && <path className="ring-draw" d="M-48 0 A48 15 0 0 0 48 0" pathLength={100} fill="none" stroke="var(--accent)" strokeWidth="3" strokeLinecap="round" style={{ strokeDasharray: `${(selA.value * 100).toFixed(1)} 100` }} />}
+            </g>
+          </svg>
+        </div>
+        {selBlocks.length === 0 && <p className="muted small">No blocks planned.</p>}
+        {selBlocks.slice(0, 4).map((b) => <div key={b.id} className="row between" style={{ gap: 10 }}><span className={`clip${b.done ? ' struck' : ''}`}>{b.done && <span className="sr">Done: </span>}{b.title || b.log}</span><span className="mono muted small">{fmtMin(b.start)}</span></div>)}
+        {selBlocks.length > 4 && <p className="muted small">and {selBlocks.length - 4} more</p>}
+        <p className="mono muted tiny">{[mealDays.has(sel) ? 'meals logged' : '', sleepDays.has(sel) ? 'sleep logged' : '', ...(cdBy.get(sel) || [])].filter(Boolean).join(' · ') || 'nothing else logged'}</p>
+        <button type="button" className="btn block" onClick={() => transition(() => setCalDay(sel))}>Open {sel === today ? 'today' : 'this day'}</button>
+      </section>}
       <p className="legend" aria-hidden="true">
         <span><svg width="14" height="14" viewBox="0 0 34 34"><circle cx="17" cy="17" r="13" fill="none" stroke="var(--accent)" strokeWidth="5" strokeDasharray="55 82" transform="rotate(-90 17 17)" /></svg>blocks done</span>
         <span><span className="cal-marks"><i className="meal" /></span>meal</span><span><span className="cal-marks"><i className="sleep" /></span>sleep</span>

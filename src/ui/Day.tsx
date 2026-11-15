@@ -5,13 +5,15 @@ import { byType, byTypeDate, db } from '../lib/db';
 import type { Block, Countdown, Habit, HabitLog, Journal, Meal, Todo } from '../lib/model';
 import { useDebounced, useLive, useNow, useReduce } from '../hooks';
 import { transition, useApp } from '../store';
-import { addBlock, carryCandidates, carryOver, dismissCarry, ensureRecurring, getFocus, saveJournal, stopFocus } from '../data';
+import { addBlock, carryCandidates, carryOver, dismissCarry, ensureRecurring, getFocus, saveJournal, startFocus, stopFocus } from '../data';
+import { nowBlock } from '../lib/day';
 import { isDone } from '../lib/habits';
 import { haptic } from '../lib/native';
 import { tickHabit, toggleBlock, toggleTodo } from './act';
 import { AutoText, Check, Icon, SPRING, SwipeRow } from './common';
 import { MiniRing, Ring } from './Ring';
 import { SleepCard } from './SleepArc';
+import { Sky } from './Sky';
 
 export function dateLabel(date: string) {
   const d = parseISO(date);
@@ -39,7 +41,7 @@ function SwipeDay({ children, onStep, style }: { children: ReactNode; onStep: (n
 export function DayView({ date, onDate, mode, onBack }: { date: ISODate; onDate: (d: ISODate) => void; mode: 'today' | 'calendar'; onBack?: () => void }) {
   const { today, min } = useNow();
   const open = useApp((s) => s.open), setTab = useApp((s) => s.setTab), setDate = useApp((s) => s.setDate), dir = useApp((s) => s.dir);
-  const name = useApp((s) => s.settings.name), startHour = useApp((s) => s.settings.startHour);
+  const name = useApp((s) => s.settings.name), startHour = useApp((s) => s.settings.startHour), sky = useApp((s) => s.settings.sky), focusLen = useApp((s) => s.settings.focusLen);
   const reduce = useReduce();
   const [view, setView] = useState<'home' | 'timeline'>('home');
   const isToday = date === today;
@@ -55,6 +57,8 @@ export function DayView({ date, onDate, mode, onBack }: { date: ISODate; onDate:
 
   const list = blocks.filter((b) => b.title.trim() || b.log.trim());
   const next = isToday ? list.find((b) => !b.done && b.start + b.dur > min) : undefined;
+  const doneN = list.filter((b) => b.done).length;
+  const current = isToday ? nowBlock(list, min) : undefined;
   const rest = [...todos].sort((a, b) => Number(a.done) - Number(b.done) || Number(!!b.main) - Number(!!a.main) || (a.time ?? 1e9) - (b.time ?? 1e9));
   const hour = Math.floor(min / 60);
   const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -91,11 +95,17 @@ export function DayView({ date, onDate, mode, onBack }: { date: ISODate; onDate:
       )}
       {focusBlock && focus && <FocusBar title={focusBlock.title} startedAt={focus.startedAt} />}
 
-      <motion.div key={`r${date}`} {...enter(26)} transition={SPRING} style={{ alignSelf: 'center' }}>
+      <motion.div key={`r${date}`} {...enter(26)} transition={SPRING} style={{ alignSelf: sky ? 'stretch' : 'center' }}>
         <SwipeDay onStep={step}>
-          <Ring blocks={blocks} now={isToday ? min : null} onOpen={() => transition(() => setView('timeline'))} caption={isToday ? undefined : 'DAY PLAN'} />
+          {sky
+            ? <Sky date={date} done={doneN} n={list.length} now={isToday ? min : null} onOpen={() => transition(() => setView('timeline'))} />
+            : <Ring blocks={blocks} now={isToday ? min : null} onOpen={() => transition(() => setView('timeline'))} caption={isToday ? undefined : 'DAY PLAN'} />}
         </SwipeDay>
       </motion.div>
+
+      {isToday && list.length > 0 && (current
+        ? <NowCard key={current.id} b={current} min={min} focusing={focus?.blockId === current.id} onFocus={() => { haptic('medium'); useApp.setState({ focusHidden: false }); void startFocus(current.id, focusLen); }} />
+        : <section className="now perfect" aria-label="Perfect day"><span className="label accent">{sky ? 'Constellation complete' : 'All blocks done'}</span><h2>Perfect day</h2></section>)}
 
       <motion.div key={`c${date}`} className="col" style={{ gap: 14 }} {...enter(64)} transition={SPRING}>
         {urgent.length > 0 && <ul className="chips" aria-label="Countdowns" style={{ listStyle: 'none', margin: 0, padding: 0 }}>{urgent.map(({ c, n }) => <li key={c.id} className="tag" style={{ padding: '6px 10px' }}>{c.label} · {n === 0 ? 'today' : `${n}d`}</li>)}</ul>}
@@ -192,6 +202,40 @@ function Intention({ date }: { date: ISODate }) {
     </section>
   );
 }
+/** The block that is running or comes next: what to do now, a ring for the time left, Complete and Focus. Swiping it right completes it too. */
+function NowCard({ b, min, focusing, onFocus }: { b: Block; min: number; focusing: boolean; onFocus: () => void }) {
+  const reduce = useReduce();
+  const running = b.start <= min && min < b.start + b.dur, late = min >= b.start + b.dur;
+  const left = b.start + b.dur - min, frac = running ? (min - b.start) / b.dur : late ? 1 : 0;
+  const name = b.title || b.log || 'Block';
+  const ringText = running ? fmtDur(left) : late ? 'due' : fmtDur(b.start - min);
+  const state = running ? 'Now' : late ? 'Overdue' : 'Next';
+  const done = (el: Element | null) => toggleBlock(b, el);
+  return (
+    <motion.section className="now" aria-label={`${state}: ${name}`} initial={reduce ? { opacity: 0 } : { opacity: 0, x: 34 }} animate={{ opacity: 1, x: 0 }} transition={SPRING}
+      drag={reduce ? false : 'x'} dragDirectionLock dragConstraints={{ left: 0, right: 0 }} dragElastic={{ left: 0.03, right: 0.5 }} dragSnapToOrigin
+      onDragEnd={(e, i) => { if (i.offset.x > 96 || (i.velocity.x > 520 && i.offset.x > 24)) done((e.target as Element | null)?.closest?.('.now')?.querySelector('.btn.primary') ?? null); }}>
+      <div className="now-top">
+        <div className="col grow" style={{ gap: 4 }}>
+          <span className="label accent">{state}</span>
+          <h2>{name}</h2>
+          <span className="mono muted small">{fmtMin(b.start)} · {fmtDur(b.dur)}{b.cat ? ` · ${b.cat}` : ''}</span>
+        </div>
+        <span className="now-ring" role="img" aria-label={running ? `${fmtDur(left)} left` : late ? 'Planned time has passed' : `Starts in ${fmtDur(b.start - min)}`}>
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--line)" strokeWidth="7" />
+            <circle cx="50" cy="50" r="42" fill="none" stroke="var(--accent)" strokeWidth="7" strokeLinecap="round" pathLength={100} transform="rotate(-90 50 50)" style={{ strokeDasharray: `${(frac * 100).toFixed(1)} 100`, opacity: frac > 0 ? 1 : 0, transition: 'stroke-dasharray .9s var(--ease)' }} />
+          </svg>
+          <span aria-hidden="true">{!running && !late && <small>in</small>}{ringText}</span>
+        </span>
+      </div>
+      <div className="row" style={{ gap: 10 }}>
+        <button type="button" className="btn primary grow" aria-label={`Complete now: ${name}`} onClick={(e) => done(e.currentTarget)}><Icon name="check" size={18} />Complete</button>
+        <button type="button" className="btn" data-focus-btn aria-label={focusing ? `Show the focus timer for ${name}` : `Start a focus timer for ${name}`} onClick={focusing ? () => useApp.setState({ focusHidden: false }) : onFocus}>Focus</button>
+      </div>
+    </motion.section>
+  );
+}
 function FocusBar({ title, startedAt }: { title: string; startedAt: number }) {
   const [, force] = useState(0);
   useEffect(() => { const t = setInterval(() => force((n) => n + 1), 15000); return () => clearInterval(t); }, []);
@@ -200,6 +244,7 @@ function FocusBar({ title, startedAt }: { title: string; startedAt: number }) {
     <div className="notice" role="status">
       <span className="grow">Focus · {title || 'block'} · <span className="mono">{fmtDur(m)}</span></span>
       <span className="row" style={{ gap: 4 }}>
+        <button type="button" className="btn" onClick={() => useApp.setState({ focusHidden: false })}>Show</button>
         <button type="button" className="btn primary" onClick={() => { haptic('success'); void stopFocus(true); }}>Done</button>
         <button type="button" className="icon-btn bare" aria-label="Cancel focus timer" onClick={() => void stopFocus(false)}><Icon name="close" size={18} /></button>
       </span>

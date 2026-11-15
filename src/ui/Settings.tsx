@@ -137,6 +137,29 @@ export function SettingsSheet() {
       <Switch label="Haptics (vibration on taps)" checked={s.haptics} onChange={(v) => set('haptics', v)} />
       <Switch label="Large text" checked={s.largeText} onChange={(v) => set('largeText', v)} />
     </section>
+    <section className="col" aria-label="Sky and focus" style={{ gap: 8 }}><h3 className="label" style={{ fontWeight: 400 }}>Sky and focus</h3>
+      <Switch label="Night sky on Today" checked={s.sky} onChange={(v) => set('sky', v)} />
+      <p className="small muted">Off shows the plain 24-hour ring instead of tonight's constellation. The count is the same.</p>
+      <div className="field"><span>Sky is worked out for</span><Seg label="Place for the sky" value={s.place.mode} onChange={(v) => {
+        if (v === 'default') set('place', { ...s.place, mode: 'default' });
+        else if (v === 'manual') set('place', { ...s.place, mode: 'manual' });
+        else if (!navigator.geolocation) say('This device does not share its location. Still using Bengaluru.');
+        else navigator.geolocation.getCurrentPosition((p) => { set('place', { mode: 'device', lat: Math.round(p.coords.latitude * 100) / 100, lon: Math.round(p.coords.longitude * 100) / 100 }); say('Location saved on this device.'); },
+          () => say('Location was not shared. Nothing changed.'), { maximumAge: 3600000, timeout: 15000 });
+      }} options={[{ v: 'default', l: 'Bengaluru' }, { v: 'device', l: 'Device' }, { v: 'manual', l: 'Manual' }]} /></div>
+      {s.place.mode !== 'default' && <div className="row">
+        <label className="field grow"><span>Latitude</span><input className="input" type="number" inputMode="decimal" step="0.01" min={-90} max={90} readOnly={s.place.mode === 'device'} value={Number.isFinite(s.place.lat) ? s.place.lat : ''} onChange={(e) => set('place', { ...s.place, lat: Math.max(-90, Math.min(90, parseFloat(e.target.value))) })} /></label>
+        <label className="field grow"><span>Longitude</span><input className="input" type="number" inputMode="decimal" step="0.01" min={-180} max={180} readOnly={s.place.mode === 'device'} value={Number.isFinite(s.place.lon) ? s.place.lon : ''} onChange={(e) => set('place', { ...s.place, lon: Math.max(-180, Math.min(180, parseFloat(e.target.value))) })} /></label>
+      </div>}
+      <p className="small muted">Moon, sunset and constellation are computed on this device, without the network, and are approximate. The place is rounded to about a kilometre and stays in this device's settings.</p>
+      <div className="field"><span>Focus length, minutes</span><Seg label="Focus length in minutes" value={String(s.focusLen)} onChange={(v) => set('focusLen', +v)} options={[15, 25, 45, 60].map((n) => ({ v: String(n), l: String(n) }))} /></div>
+    </section>
+    <section className="col" aria-label="Meals" style={{ gap: 8 }}><h3 className="label" style={{ fontWeight: 400 }}>Meals</h3>
+      <Switch label="Show calories" checked={s.showCalories} onChange={(v) => set('showCalories', v)} />
+      <div className="row">{(['protein', 'carbs', 'fat'] as const).map((k) => (
+        <label key={k} className="field grow"><span>{k} g</span><input className="input" type="number" inputMode="numeric" min={1} max={999} value={s.macroTargets[k] || ''} onChange={(e) => set('macroTargets', { ...s.macroTargets, [k]: Math.max(0, Math.min(999, Math.round(+e.target.value) || 0)) })} /></label>))}</div>
+      <p className="small muted">Daily macro targets for the rings on Meals. Macros and calories are optional on every meal.</p>
+    </section>
     <section className="col" aria-label="Sync"><h3 className="label" style={{ fontWeight: 400 }}>Sync</h3><SyncSection /></section>
     <section className="col" aria-label="Privacy" style={{ gap: 8 }}><h3 className="label" style={{ fontWeight: 400 }}>Privacy</h3>
       <Switch label={<span className="row" style={{ gap: 8 }}><Icon name="lock" size={18} />Lock the app with fingerprint or screen lock</span>} checked={s.lock} disabled={!bio} onChange={async (on) => { if (await unlock(on ? 'Turn on app lock' : 'Turn off app lock')) set('lock', on); }} />

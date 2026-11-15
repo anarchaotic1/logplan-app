@@ -1,9 +1,5 @@
-/** Completion effects: a shock ring in the background, a few sparks, or (with reduced motion) a still highlight. */
+/** Completion effects: a few sparks from the check, or (with reduced motion) a still highlight. */
 import { reducedNow } from './store';
-
-type Pulse = (x: number, y: number) => void;
-const subs = new Set<Pulse>();
-export const onPulse = (f: Pulse) => { subs.add(f); return () => { subs.delete(f); }; };
 
 function sparks(x: number, y: number) {
   const box = document.createElement('div');
@@ -26,6 +22,5 @@ export function celebrate(el: Element | null | undefined) {
   const r = el.getBoundingClientRect();
   const x = r.left + r.width / 2, y = r.top + r.height / 2;
   if (reducedNow()) { el.classList.remove('flash'); void (el as HTMLElement).offsetWidth; el.classList.add('flash'); return; }
-  subs.forEach((f) => f(x, y));
   sparks(x, y);
 }

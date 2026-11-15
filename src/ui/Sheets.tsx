@@ -4,6 +4,7 @@ import { byType, byTypeDate, db } from '../lib/db';
 import type { Block, Countdown, Habit, HabitLog, MealCat, Recurring, Todo } from '../lib/model';
 import { useLive, useNow } from '../hooks';
 import { useApp } from '../store';
+import { HabitInfo } from './Habits';
 import { addBlock, addHabit, addMeal, addTodo, getFocus, patch, put, startFocus, stopFocus, tagFor, uid } from '../data';
 import { isDone } from '../lib/habits';
 import { haptic, notifPermission } from '../lib/native';
@@ -62,7 +63,7 @@ function BlockSheet({ id, fresh }: { id: string; fresh?: boolean }) {
       <button type="button" className={`chip${b.remindLead != null ? ' on' : ''}`} aria-pressed={b.remindLead != null} onClick={async () => { if (b.remindLead != null) set({ remindLead: null }); else if (await wantReminder()) set({ remindLead: lead }); }}>
         <Icon name="bell" size={16} />{b.remindLead != null ? `Remind ${b.remindLead}m before` : 'Remind me'}
       </button>
-      {!b.done && <button type="button" className={`chip plain${running ? ' on' : ''}`} onClick={async () => { haptic('medium'); if (running) await stopFocus(true); else { await startFocus(b.id); close(); say('Focus timer started.'); } }}>
+      {!b.done && <button type="button" className={`chip plain${running ? ' on' : ''}`} onClick={async () => { haptic('medium'); if (running) await stopFocus(true); else { useApp.setState({ focusHidden: false }); await startFocus(b.id, useApp.getState().settings.focusLen); close(); } }}>
         <Icon name={running ? 'stop' : 'play'} size={14} />{running ? 'Stop and mark done' : 'Start focus timer'}
       </button>}
       <button type="button" className={`chip plain${repeat ? ' on' : ''}`} aria-expanded={repeat} onClick={() => setRepeat(!repeat)}>Repeat</button>
@@ -196,7 +197,7 @@ function CountdownSheet({ id }: { id?: string }) {
     {ex && <button type="button" className="btn danger block" onClick={() => { close(); void removeWithUndo(ex, 'Countdown'); }}>Delete countdown</button>}
   </>;
 }
-const TITLES: Record<string, string> = { block: 'Block', todo: 'To-do', capture: 'Quick capture', habit: 'Habit', countdown: 'Countdown', settings: 'Settings' };
+const TITLES: Record<string, string> = { block: 'Block', todo: 'To-do', capture: 'Quick capture', habit: 'Habit', habitInfo: 'Habit history', countdown: 'Countdown', settings: 'Settings' };
 export function Sheets() {
   const sheet = useApp((s) => s.sheet), close = useApp((s) => s.close);
   const last = useRef(sheet);
@@ -209,6 +210,7 @@ export function Sheets() {
       {s?.kind === 'todo' && <TodoSheet key={p.id} id={p.id} />}
       {s?.kind === 'capture' && <CaptureSheet mode={p.mode} date={p.date} />}
       {s?.kind === 'habit' && <HabitSheet key={p.id || 'new'} id={p.id} />}
+      {s?.kind === 'habitInfo' && <HabitInfo key={p.id} id={p.id} />}
       {s?.kind === 'countdown' && <CountdownSheet key={p.id || 'new'} id={p.id} />}
       {s?.kind === 'settings' && <SettingsSheet />}
     </Sheet>

@@ -11,13 +11,18 @@ export interface Settings {
   name: string; startHour: number; lock: boolean; remindLead: number; sleepTarget: number;
   /** 'system' follows the phone's "remove animations" setting; the other two override it. */
   motion: 'system' | 'reduce' | 'full'; haptics: boolean; largeText: boolean; cats: string[];
+  /** v2.2: the night sky on Today (off = the plain 24-hour ring), calories hidden unless asked for, daily macro targets in grams,
+   *  focus length in minutes, and where the sky is computed for ('default' = Bengaluru; the position never leaves the device unless settings sync). */
+  sky: boolean; showCalories: boolean; macroTargets: { protein: number; carbs: number; fat: number }; focusLen: number;
+  place: { mode: 'default' | 'device' | 'manual'; lat: number; lon: number };
 }
-export const DEFAULTS: Settings = { name: '', startHour: 0, lock: false, remindLead: 10, sleepTarget: 480, motion: 'system', haptics: true, largeText: false, cats: [...CATS] };
+export const DEFAULTS: Settings = { name: '', startHour: 0, lock: false, remindLead: 10, sleepTarget: 480, motion: 'system', haptics: true, largeText: false, cats: [...CATS],
+  sky: true, showCalories: false, macroTargets: { protein: 90, carbs: 260, fat: 70 }, focusLen: 25, place: { mode: 'default', lat: 12.97, lon: 77.59 } };
 export interface SheetState { kind: string; props?: any }
 export interface Toast { id: number; text: string; action?: { label: string; run: () => void } }
 
 interface State {
-  tab: Tab; date: ISODate; dir: number; calDay: ISODate | null; calMonth: ISODate; viewer: { mealId: string; photoId: string } | null;
+  tab: Tab; date: ISODate; dir: number; calDay: ISODate | null; calMonth: ISODate; viewer: { mealId: string; photoId: string } | null; focusHidden: boolean; mealOpen: string | null;
   sheet: SheetState | null; toast: Toast | null; live: string; settings: Settings; ready: boolean;
   setTab(t: Tab): void; setDate(d: ISODate): void; setCalDay(d: ISODate | null): void; open(kind: string, props?: any): void; close(): void;
   say(text: string, action?: Toast['action']): void; announce(text: string): void;
@@ -38,7 +43,7 @@ const monthOf = (d: ISODate) => `${d.slice(0, 7)}-01`;
 let opener: HTMLElement | null = null;
 let toastTimer: ReturnType<typeof setTimeout> | undefined;
 export const useApp = create<State>((set, get) => ({
-  tab: 'today', date: isoDate(new Date()), dir: 0, calDay: null, calMonth: monthOf(isoDate(new Date())), viewer: null,
+  tab: 'today', date: isoDate(new Date()), dir: 0, calDay: null, calMonth: monthOf(isoDate(new Date())), viewer: null, focusHidden: false, mealOpen: null,
   sheet: null, toast: null, live: '', settings: DEFAULTS, ready: false,
   setTab: (tab) => { if (tab !== get().tab) transition(() => set({ tab })); },
   setDate: (date) => set({ date, dir: date > get().date ? 1 : date < get().date ? -1 : 0 }),

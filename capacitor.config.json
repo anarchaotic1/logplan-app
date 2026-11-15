@@ -2,10 +2,10 @@
   "appId": "com.hari.logplan",
   "appName": "Log/Plan",
   "webDir": "dist",
-  "backgroundColor": "#010208",
+  "backgroundColor": "#040A18",
   "android": {
     "allowMixedContent": false,
-    "backgroundColor": "#010208"
+    "backgroundColor": "#040A18"
   },
   "plugins": {
     "SystemBars": {
@@ -14,7 +14,7 @@
       "style": "DARK"
     },
     "LocalNotifications": {
-      "iconColor": "#FFB35C"
+      "iconColor": "#5CE1E6"
     },
     "Keyboard": {
       "resizeOnFullScreen": true

@@ -38,8 +38,8 @@ export async function saveSleep(date: ISODate, bed: number, wake: number) {
   await put<Sleep>({ id: `sleep:${date}`, type: 'sleep', date, bed, wake });
 }
 export const tagFor = (m: number) => (m < 660 ? 'Breakfast' : m < 960 ? 'Lunch' : m < 1260 ? 'Dinner' : 'Snack');
-export function addMeal(date: ISODate, time: number, name: string, tag = tagFor(time)) {
-  return put<Meal>({ id: uid('m'), type: 'meal', date, time, name, tag });
+export function addMeal(date: ISODate, time: number, name: string, tag = tagFor(time), extra: Partial<Meal> = {}) {
+  return put<Meal>({ id: uid('m'), type: 'meal', date, time, name, tag, ...extra });
 }
 /** Photo removal is two-step so it can be undone: the id leaves the meal now, the bytes go at the next sync or app start. */
 export async function detachPhoto(meal: Meal, photoId: string) {
@@ -83,9 +83,9 @@ export async function saveDayAsTemplate(name: string, date: ISODate) {
   return blocks.length;
 }
 
-export interface Focus { blockId: string; startedAt: number }
+export interface Focus { blockId: string; startedAt: number; len?: number }
 export const getFocus = () => kvGet<Focus | null>('focus', null);
-export async function startFocus(blockId: string) { await kvSet('focus', { blockId, startedAt: Date.now() }); }
+export async function startFocus(blockId: string, len?: number) { await kvSet('focus', { blockId, startedAt: Date.now(), len }); }
 export async function stopFocus(markDone: boolean) {
   const f = await getFocus();
   if (!f) return;
