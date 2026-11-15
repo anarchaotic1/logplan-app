@@ -19,7 +19,9 @@ export interface HabitTarget { kind: 'daily' | 'weekly' | 'count'; perWeek?: num
 export interface Habit extends Base { type: 'habit'; name: string; cue: string; target: HabitTarget; restDays: number[];
   remindTime?: number | null; archived?: boolean; activityMin?: number; createdOn: ISODate; order: number }
 export interface HabitLog extends Base { type: 'habitLog'; date: ISODate; habitId: string; value: number }
-export interface Meal extends Base { type: 'meal'; date: ISODate; time: number; name: string; tag: string; photos?: string[] }
+export interface Meal extends Base { type: 'meal'; date: ISODate; time: number; name: string; tag: string; photos?: string[];
+  /** v2.2, all optional: what was on the plate [protein, veg, carbs, fruit or dairy], macros in grams, calories (shown only if the setting is on). */
+  groups?: boolean[]; macros?: { protein: number; carbs: number; fat: number }; calories?: number }
 export interface MealCat extends Base { type: 'mealCat'; name: string; tag: string }
 export interface Countdown extends Base { type: 'countdown'; label: string; target: ISODate }
 export interface WeekReview extends Base { type: 'weekReview'; date: ISODate; good: string; drop: string; obstacle: string; plan: string; done?: boolean }

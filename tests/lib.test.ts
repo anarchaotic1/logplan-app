@@ -233,3 +233,45 @@ describe('notification planner', () => {
     expect(open[0].key).toBe('habit:h:2026-11-14');
   });
 });
+
+import { macroTotals as mT, mealGroups as mG, nowBlock as nB } from '../src/lib/day';
+import { bestStreak as bS, forgivingStreak as fS, rate as hRate } from '../src/lib/habits';
+import { DEFAULTS as SET } from '../src/store';
+describe('v2.2 meals, Now card, streaks, settings', () => {
+  it('a meal from before v2.2 has no plate groups lit, and partial data is read safely', () => {
+    expect(mG({})).toEqual([false, false, false, false]);
+    expect(mG({ groups: [true] })).toEqual([true, false, false, false]);
+    expect(mG({ groups: [false, true, false, true, true] })).toEqual([false, true, false, true]);
+  });
+  it('macro totals add only meals that have macros', () => {
+    expect(mT([{}, { macros: { protein: 20, carbs: 50, fat: 12 } }, { macros: { protein: 10, carbs: 25, fat: 5 } }])).toEqual({ protein: 30, carbs: 75, fat: 17, logged: 2 });
+    expect(mT([{}, {}]).logged).toBe(0);
+  });
+  it('calories are hidden, the sky is on, and the place is Bengaluru unless the user changes it', () => {
+    expect(SET.showCalories).toBe(false); expect(SET.sky).toBe(true); expect(SET.place.mode).toBe('default'); expect(SET.focusLen).toBe(25);
+    expect(SET.macroTargets).toEqual({ protein: 90, carbs: 260, fat: 70 });
+  });
+  it('the Now card shows the running or next block, then the first unfinished one, then nothing', () => {
+    const b = (start: number, done = false) => ({ start, dur: 60, done });
+    const list = [b(360, true), b(540), b(660), b(900)];
+    expect(nB(list, 570)).toBe(list[1]);   // running
+    expect(nB(list, 620)).toBe(list[2]);   // next to start
+    expect(nB(list, 1300)).toBe(list[1]);  // everything is in the past: the first one still open
+    expect(nB([b(360, true)], 400)).toBeUndefined();
+    expect(nB(list, null)).toBe(list[1]);
+  });
+  it('an unfinished today does not break the streak that ended yesterday', () => {
+    const h = { id: 'h', type: 'habit', name: 'Gym', cue: '', target: { kind: 'daily' }, restDays: [], createdOn: '2026-11-01', order: 0, updatedAt: '' } as never;
+    const logs = { '2026-11-12': 1, '2026-11-13': 1, '2026-11-14': 1 };
+    expect(fS(h, logs, '2026-11-15')).toBe(3);
+    expect(fS(h, { ...logs, '2026-11-15': 1 }, '2026-11-15')).toBe(4);
+  });
+  it('best streak is the longest run ever, and the 12-week rate is done over due', () => {
+    const h = { id: 'h', type: 'habit', name: 'Gym', cue: '', target: { kind: 'daily' }, restDays: [], createdOn: '2026-11-01', order: 0, updatedAt: '' } as never;
+    const logs: Record<string, number> = {};
+    for (const d of [1, 2, 3, 4, 5, 9, 10]) logs[`2026-11-${String(d).padStart(2, '0')}`] = 1;
+    expect(bS(h, logs, '2026-11-15')).toBe(5);
+    expect(fS(h, logs, '2026-11-15')).toBe(0);
+    expect(hRate(h, logs, '2026-11-14')).toBeCloseTo(7 / 13); // the 14th is still open, so it is not counted as a miss
+  });
+});

@@ -63,3 +63,21 @@ export function consistency(h: Habit, logs: LogMap, today: ISODate, window = 28)
   }
   return due ? done / due : null;
 }
+/** Longest forgiving streak ever reached (same rule as forgivingStreak: one missed due day does not end it, two in a row do). */
+export function bestStreak(h: Habit, logs: LogMap, today: ISODate): number {
+  if (h.target.kind === 'weekly') {
+    const need = h.target.perWeek || 1; let best = 0, run = 0;
+    for (let wk = mondayOf(h.createdOn); wk <= today; wk = addDays(wk, 7)) { if (weekCount(logs, wk) >= need) { run++; best = Math.max(best, run); } else if (wk !== mondayOf(today)) run = 0; }
+    return best;
+  }
+  let best = 0, run = 0, misses = 0;
+  for (let d = h.createdOn, guard = 0; d <= today && guard < 3700; d = addDays(d, 1), guard++) {
+    if (!isDue(h, d)) continue;
+    if (isDone(h, logs[d])) { run++; misses = 0; best = Math.max(best, run); }
+    else if (d !== today && ++misses >= 2) { run = 0; }
+  }
+  return best;
+}
+/** Share of due days done over the last `weeks` whole weeks ending this week (0..1), or null with nothing due. */
+export const rate = (h: Habit, logs: LogMap, today: ISODate, weeks = 12) => consistency(h, logs, today, weeks * 7);
+export const MILESTONES = [7, 21, 50, 100];
