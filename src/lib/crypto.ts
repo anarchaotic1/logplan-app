@@ -6,7 +6,8 @@
 export const KDF_ITERATIONS = 600_000;
 const enc = new TextEncoder(), dec = new TextDecoder();
 
-export const b64 = (u: Uint8Array) => btoa(String.fromCharCode(...u));
+/** Base64 in chunks, so large buffers (photos) do not overflow the argument limit. */
+export const b64 = (u: Uint8Array) => { let s = ''; for (let i = 0; i < u.length; i += 0x8000) s += String.fromCharCode(...u.subarray(i, i + 0x8000)); return btoa(s); };
 export const unb64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 export const randomBytes = (n: number) => crypto.getRandomValues(new Uint8Array(n));
 

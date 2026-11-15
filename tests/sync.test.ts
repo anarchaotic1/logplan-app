@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { IDBFactory } from 'fake-indexeddb';
 import { LPDB } from '../src/lib/db';
 import { deriveKey } from '../src/lib/crypto';
-import { MemoryStore, newSalt, readManifest, saltBytes, syncOnce, WrongKeyError, type SyncState } from '../src/lib/sync';
-import type { Journal, Rec, Todo } from '../src/lib/model';
+import { MemoryStore, newSalt, readManifest, saltBytes, syncOnce, syncPhotos, PHOTO_SYNC_CAP, WrongKeyError, type SyncState } from '../src/lib/sync';
+import type { Journal, Meal, Rec, Todo } from '../src/lib/model';
 
 const T0 = Date.now() - 100000; // recent, so tombstones are within their retention window
 const stamp = (ms: number, node: string) => `${String(T0 + ms).padStart(15, '0')}:00000:${node}`;
@@ -105,5 +105,65 @@ describe('encrypted sync between a phone and a laptop', () => {
     await expect(syncOnce(laptop, drive, wrong, salt)).rejects.toBeInstanceOf(WrongKeyError);
     expect(drive.files).toEqual(files);
     expect(await laptop.rec.count()).toBe(1);
+  });
+});
+
+describe('photo sync (encrypted files next to the records)', () => {
+  const bytes = (n: number, fill: number) => new Uint8Array(n).fill(fill).buffer as ArrayBuffer;
+  const meal = (photos: string[], ms: number, node = 'p'): Rec => ({ id: 'm1', type: 'meal', date: '2026-11-14', time: 780, name: 'Dal rice', tag: 'Lunch', photos, updatedAt: stamp(ms, node) } as Meal);
+  const both = async () => { await syncPhone(); await syncPhotos(phone, drive, key); await syncLaptop(); await syncPhotos(laptop, drive, key); };
+
+  it('a photo added on the phone arrives on the laptop, byte for byte, and is unreadable in the store', async () => {
+    await phone.rec.put(meal(['px'], 10));
+    await phone.photos.put({ id: 'px', createdAt: Date.now(), mime: 'image/jpeg', buf: bytes(200000, 7), thumb: bytes(900, 9) });
+    await both();
+    const got = (await laptop.photos.get('px'))!;
+    expect(new Uint8Array(got.buf!).length).toBe(200000);
+    expect(new Uint8Array(got.buf!)[1234]).toBe(7);
+    expect(new Uint8Array(got.thumb!)[10]).toBe(9);
+    expect(drive.files.get('p-px.json')).not.toContain('image/jpeg');
+    const again = await syncPhotos(laptop, drive, key);
+    expect(again).toMatchObject({ up: 0, down: 0, removed: 0, waiting: 0 });
+  });
+  it('works in batches and reports what is still waiting', async () => {
+    const ids = Array.from({ length: 5 }, (_, i) => `p${i}`);
+    await phone.rec.put(meal(ids, 10));
+    for (const id of ids) await phone.photos.put({ id, createdAt: Date.now(), buf: bytes(100, 1) });
+    await syncPhone();
+    expect(await syncPhotos(phone, drive, key, 2)).toMatchObject({ up: 2, waiting: 3 });
+    expect(await syncPhotos(phone, drive, key, 2)).toMatchObject({ up: 2, waiting: 1 });
+    expect(await syncPhotos(phone, drive, key, 2)).toMatchObject({ up: 1, waiting: 0 });
+  });
+  it('removing a photo deletes the remote file; the other device drops its copy after the grace period', async () => {
+    await phone.rec.put(meal(['px'], 10));
+    await phone.photos.put({ id: 'px', createdAt: Date.now() - 2 * 86400000, buf: bytes(100, 1) });
+    await both();
+    await phone.rec.put(meal([], 20));
+    await phone.kv.put({ key: 'photoTrash', value: ['px'] });
+    await syncPhone();
+    expect(await syncPhotos(phone, drive, key)).toMatchObject({ removed: 1 });
+    expect(drive.files.has('p-px.json')).toBe(false);
+    expect(await phone.photos.get('px')).toBeUndefined();
+    await syncLaptop(); await syncPhotos(laptop, drive, key);
+    expect(await laptop.photos.get('px')).toBeUndefined();
+  });
+  it('an undone removal keeps the photo, and a fresh unreferenced photo is not dropped', async () => {
+    await phone.rec.put(meal(['px'], 10));
+    await phone.photos.put({ id: 'px', createdAt: Date.now(), buf: bytes(100, 1) });
+    await phone.photos.put({ id: 'fresh', createdAt: Date.now(), buf: bytes(100, 1) });
+    await phone.kv.put({ key: 'photoTrash', value: ['px'] }); // removed, then undone: the meal still lists it
+    await syncPhone(); await syncPhotos(phone, drive, key);
+    expect(drive.files.has('p-px.json')).toBe(true);
+    expect(await phone.photos.get('px')).toBeDefined();
+    expect(await phone.photos.get('fresh')).toBeDefined();
+  });
+  it('stops uploading above the storage cap and says so', async () => {
+    expect(PHOTO_SYNC_CAP).toBeGreaterThan(100e6);
+    await phone.rec.put(meal(['px'], 10));
+    await phone.photos.put({ id: 'px', createdAt: Date.now(), buf: bytes(100, 1) });
+    await phone.photos.put({ id: 'huge', createdAt: Date.now(), buf: { byteLength: PHOTO_SYNC_CAP + 1 } as ArrayBuffer });
+    await syncPhone();
+    expect(await syncPhotos(phone, drive, key)).toMatchObject({ up: 0, capped: true, waiting: 1 });
+    expect(drive.files.has('p-px.json')).toBe(false);
   });
 });

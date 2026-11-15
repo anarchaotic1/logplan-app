@@ -2,15 +2,15 @@
 import { create } from 'zustand';
 import { db, kvGet, kvSet, onDirty } from './lib/db';
 import { deriveKey, keyFromRecovery, unb64, verifyKey } from './lib/crypto';
-import { DriveStore, newSalt, readManifest, syncOnce, WrongKeyError, type SyncState } from './lib/sync';
+import { DriveStore, newSalt, readManifest, syncOnce, syncPhotos, WrongKeyError, type SyncState } from './lib/sync';
 import { isNative, secure } from './lib/native';
 
 export const WEB_CLIENT_ID: string = import.meta.env.VITE_GOOGLE_WEB_CLIENT_ID || '';
 const SCOPE = 'https://www.googleapis.com/auth/drive.appdata';
 export const syncConfigured = !!WEB_CLIENT_ID;
 
-interface S { connected: boolean; busy: boolean; error: string; lastSync: string; lastResult: string; set(p: Partial<S>): void }
-export const useSync = create<S>((set) => ({ connected: false, busy: false, error: '', lastSync: '', lastResult: '', set: (p) => set(p) }));
+interface S { connected: boolean; busy: boolean; error: string; lastSync: string; lastResult: string; photoNote: string; set(p: Partial<S>): void }
+export const useSync = create<S>((set) => ({ connected: false, busy: false, error: '', lastSync: '', lastResult: '', photoNote: '', set: (p) => set(p) }));
 
 let token = '', tokenAt = 0;
 async function webToken(interactive: boolean): Promise<string> {
@@ -84,6 +84,11 @@ export function syncNow(): Promise<void> {
       const { result, state } = await syncOnce(db, drive(), key, saved.salt, saved.state);
       await kvSet('sync', { salt: saved.salt, state });
       st.set({ lastSync: state.lastSync || '', lastResult: result.pulled || result.pushed ? `${result.pushed} sent, ${result.pulled} received` : 'Up to date' });
+      // Photos go after the records and never block them.
+      try {
+        const p = await syncPhotos(db, drive(), key);
+        st.set({ photoNote: p.capped ? 'Photo storage is over the sync limit; new photos stay on this device.' : p.waiting ? `${p.waiting} photos still to transfer; they continue on the next sync.` : '' });
+      } catch (e) { st.set({ photoNote: `Photos did not sync this time (${e instanceof Error ? e.message : 'unknown error'}). Your other data did.` }); }
     } catch (e) { st.set({ error: e instanceof Error ? e.message : 'Sync failed.' }); }
     finally { st.set({ busy: false }); }
   })().finally(() => { running = null; });

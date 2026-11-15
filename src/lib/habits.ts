@@ -1,6 +1,6 @@
 /** Habit maths. Grounded in Lally et al. (2010): repetition in a stable context builds automaticity along a
  *  flattening curve, and one missed day barely matters while repeated inconsistency does. */
-import { addDays, daysBetween, dow, mondayOf, type ISODate } from './dates';
+import { addDays, dow, mondayOf, type ISODate } from './dates';
 import type { Habit } from './model';
 
 export type LogMap = Record<ISODate, number>; // date → value (>0 means done / count)
@@ -62,22 +62,4 @@ export function consistency(h: Habit, logs: LogMap, today: ISODate, window = 28)
     due++; if (isDone(h, logs[d])) done++;
   }
   return due ? done / due : null;
-}
-/** Modelled automaticity (0..1) per day since the habit started. This is an illustration of the curve shape
- *  reported by Lally et al., not a measurement of the user: each repetition closes 4.4% of the remaining gap
- *  (which reaches 95% after 66 repetitions, the study's median), and each missed due day costs about 0.7%
- *  (the study saw roughly 0.29 points on a 42-point scale). */
-export const REP_GAIN = 1 - Math.pow(0.05, 1 / 66);
-export const MISS_LOSS = 0.29 / 42;
-export function automaticityCurve(h: Habit, logs: LogMap, today: ISODate): number[] {
-  const out: number[] = [];
-  let a = 0;
-  const n = Math.min(daysBetween(h.createdOn, today), 400);
-  for (let i = 0; i <= n; i++) {
-    const d = addDays(h.createdOn, i);
-    if (logs[d] > 0) a += (1 - a) * REP_GAIN;
-    else if (isDue(h, d) && d !== today && h.target.kind !== 'weekly') a *= 1 - MISS_LOSS;
-    out.push(a);
-  }
-  return out;
 }

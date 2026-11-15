@@ -1,6 +1,8 @@
 import type { ISODate } from './dates';
 
-/** Every synced entity is one record: stable id, HLC stamp, optional tombstone. */
+/** Record types. Journal (beyond the morning intention), weekReview and topic no longer have screens in v2.1,
+ *  but the types stay: their stored records are kept, exported and synced untouched.
+ *  Every synced entity is one record: stable id, HLC stamp, optional tombstone. */
 export interface Base { id: string; type: RecType; updatedAt: string; deleted?: boolean; date?: ISODate }
 
 export type RecType =
@@ -17,7 +19,7 @@ export interface HabitTarget { kind: 'daily' | 'weekly' | 'count'; perWeek?: num
 export interface Habit extends Base { type: 'habit'; name: string; cue: string; target: HabitTarget; restDays: number[];
   remindTime?: number | null; archived?: boolean; activityMin?: number; createdOn: ISODate; order: number }
 export interface HabitLog extends Base { type: 'habitLog'; date: ISODate; habitId: string; value: number }
-export interface Meal extends Base { type: 'meal'; date: ISODate; time: number; name: string; tag: string }
+export interface Meal extends Base { type: 'meal'; date: ISODate; time: number; name: string; tag: string; photos?: string[] }
 export interface MealCat extends Base { type: 'mealCat'; name: string; tag: string }
 export interface Countdown extends Base { type: 'countdown'; label: string; target: ISODate }
 export interface WeekReview extends Base { type: 'weekReview'; date: ISODate; good: string; drop: string; obstacle: string; plan: string; done?: boolean }

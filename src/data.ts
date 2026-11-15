@@ -1,9 +1,8 @@
 /** All writes go through here so screens stay declarative. */
 import { addDays, dow, type ISODate } from './lib/dates';
 import { byType, byTypeDate, db, kvGet, kvSet, patch, put, remove } from './lib/db';
-import { uid, type Block, type Habit, type HabitLog, type Journal, type Recurring, type Sleep, type Template, type Todo, type Topic, type WeekReview } from './lib/model';
+import { uid, type Block, type Habit, type HabitLog, type Journal, type Meal, type Recurring, type Sleep, type Template, type Todo } from './lib/model';
 import { isDone } from './lib/habits';
-import { review as spacedReview } from './lib/spaced';
 
 export const emptyJournal = (date: ISODate): Journal => ({ id: `journal:${date}`, type: 'journal', date, updatedAt: '', intention: '', text: '', win: '', lesson: '', ifThen: '', mood: null, energy: null, tags: [], photos: [] });
 
@@ -38,9 +37,20 @@ export function addHabit(h: Partial<Habit> & { name: string }, today: ISODate, o
 export async function saveSleep(date: ISODate, bed: number, wake: number) {
   await put<Sleep>({ id: `sleep:${date}`, type: 'sleep', date, bed, wake });
 }
-export async function saveReview(monday: ISODate, changes: Partial<WeekReview>) {
-  const cur = (await db.rec.get(`wr:${monday}`)) as WeekReview | undefined;
-  await put<WeekReview>({ id: `wr:${monday}`, type: 'weekReview', date: monday, good: '', drop: '', obstacle: '', plan: '', ...(cur && !cur.deleted ? cur : {}), ...changes });
+export const tagFor = (m: number) => (m < 660 ? 'Breakfast' : m < 960 ? 'Lunch' : m < 1260 ? 'Dinner' : 'Snack');
+export function addMeal(date: ISODate, time: number, name: string, tag = tagFor(time)) {
+  return put<Meal>({ id: uid('m'), type: 'meal', date, time, name, tag });
+}
+/** Photo removal is two-step so it can be undone: the id leaves the meal now, the bytes go at the next sync or app start. */
+export async function detachPhoto(meal: Meal, photoId: string) {
+  await patch<Meal>(meal.id, { photos: (meal.photos || []).filter((p) => p !== photoId) });
+  await kvSet('photoTrash', [...new Set([...(await kvGet<string[]>('photoTrash', [])), photoId])]);
+}
+export async function attachPhoto(mealId: string, photoId: string) {
+  const m = (await db.rec.get(mealId)) as Meal | undefined;
+  if (!m || m.deleted) return;
+  await patch<Meal>(mealId, { photos: [...new Set([...(m.photos || []), photoId])] });
+  await kvSet('photoTrash', (await kvGet<string[]>('photoTrash', [])).filter((p) => p !== photoId));
 }
 /** Yesterday's unfinished to-dos, unless the user already handled the prompt today. */
 export async function carryCandidates(today: ISODate): Promise<Todo[]> {
@@ -61,7 +71,7 @@ export async function ensureRecurring(date: ISODate) {
     const id = `rc:${r.id}:${date}`;
     if (await db.rec.get(id)) continue;
     if (r.kind === 'block') await put<Block>({ id, type: 'block', date, start: r.start ?? 540, dur: r.dur ?? 60, title: r.title, log: '', cat: r.cat || '', done: false, remindLead: null, cue: r.cue });
-    else await put<Todo>({ id, type: 'todo', date, text: r.title, done: false, time: null, remindAt: null });
+    else await put<Todo>({ id, type: 'todo', date, text: r.title, done: false, time: r.start ?? null, remindAt: null });
   }
 }
 export async function applyTemplate(t: Template, date: ISODate) {
@@ -72,7 +82,6 @@ export async function saveDayAsTemplate(name: string, date: ISODate) {
   await put<Template>({ id: uid('tp'), type: 'template', name, blocks: blocks.map((b) => ({ start: b.start, dur: b.dur, title: b.title, cat: b.cat, cue: b.cue })) });
   return blocks.length;
 }
-export async function reviewTopic(t: Topic, ok: boolean, today: ISODate) { await patch<Topic>(t.id, spacedReview(t, ok, today)); }
 
 export interface Focus { blockId: string; startedAt: number }
 export const getFocus = () => kvGet<Focus | null>('focus', null);

@@ -1,36 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, MotionConfig } from 'motion/react';
-import { addDays } from './lib/dates';
-import { byType, byTypeDate } from './lib/db';
+import { addDays, fmtMin } from './lib/dates';
+import { byType, byTypeDate, db, kvGet, kvSet, onDirty } from './lib/db';
 import type { Block, Habit, HabitLog, Todo } from './lib/model';
-import { adherence } from './lib/insights';
+import { adherence } from './lib/day';
+import { isDone } from './lib/habits';
 import { planNotifications } from './lib/notif';
 import { applyNotifications, onBack, onResume, unlock } from './lib/native';
-import { onDirty } from './lib/db';
-import { useLive, useMedia, useNow } from './hooks';
-import { TABS, useApp, type Tab } from './store';
-import { Icon, SPRING } from './ui/common';
-import { Today, dateLabel } from './ui/Today';
-import { Journal } from './ui/Journal';
+import { referencedPhotos } from './lib/sync';
+import { useLive, useMedia, useNow, useReduce } from './hooks';
+import { TABS, transition, useApp, type Tab } from './store';
+import { Check, Icon, SPRING } from './ui/common';
+import { DayView, dateLabel } from './ui/Day';
+import { Calendar } from './ui/Calendar';
+import { Meals, PhotoViewer } from './ui/Meals';
 import { Habits } from './ui/Habits';
-import { Insights } from './ui/Insights';
-import { Plan } from './ui/Plan';
 import { Sheets } from './ui/Sheets';
 import { MiniRing } from './ui/Ring';
-import { fmtMin } from './lib/dates';
+import { Supernova } from './ui/Supernova';
+import { tickHabit, toggleBlock, toggleTodo } from './ui/act';
 
-const LABEL: Record<Tab, string> = { today: 'Today', journal: 'Journal', habits: 'Habits', insights: 'Insights', plan: 'Plan' };
-const STARS: [number, number, number, number][] = [[11, 7, 2, 0.9], [34, 3, 1, 0.8], [71, 12, 2, 0.75], [93, 31, 1, 0.8], [6, 36, 1, 0.7], [88, 58, 2, 0.6], [17, 71, 1, 0.7], [52, 66, 1, 0.6], [63, 88, 2, 0.45]];
-const TWINKLE: [number, number, number][] = [[16, 11, 0], [81, 25, 1.4], [6, 48, 2.6]];
+const LABEL: Record<Tab, string> = { today: 'Today', calendar: 'Calendar', meals: 'Meals', habits: 'Habits' };
 
-function Sky({ glow }: { glow: number }) {
-  return (
-    <div className="sky" aria-hidden="true" style={{ ['--glow' as string]: glow }}>
-      {STARS.map(([x, y, s, o], i) => <i key={i} style={{ left: `${x}%`, top: `${y}%`, width: s, height: s, opacity: o }} />)}
-      {TWINKLE.map(([x, y, d], i) => <i key={`t${i}`} className="tw" style={{ left: `${x}%`, top: `${y}%`, width: 2, height: 2, animationDelay: `${d}s` }} />)}
-    </div>
-  );
-}
 function Cursor() {
   const dot = useRef<HTMLDivElement>(null), ring = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -43,42 +34,52 @@ function Cursor() {
   }, []);
   return <><div ref={ring} className="cursor-ring" aria-hidden="true" /><div ref={dot} className="cursor-dot" aria-hidden="true" /></>;
 }
+/** Laptop only: today at a glance, with the same one-tap checks as the main pane. */
 function Glance() {
   const { today, min } = useNow();
-  const setTab = useApp((s) => s.setTab), setDate = useApp((s) => s.setDate), open = useApp((s) => s.open);
+  const setTab = useApp((s) => s.setTab), setDate = useApp((s) => s.setDate);
   const blocks = useLive(async () => (await byTypeDate<Block>('block', today)).sort((a, b) => a.start - b.start), [today], []);
   const todos = useLive(() => byTypeDate<Todo>('todo', today), [today], []);
-  const habits = useLive(async () => (await byType<Habit>('habit')).filter((h) => !h.archived), [], []);
+  const habits = useLive(async () => (await byType<Habit>('habit')).filter((h) => !h.archived).sort((a, b) => a.order - b.order), [], []);
   const logs = useLive(() => byTypeDate<HabitLog>('habitLog', today), [today], []);
   const adh = adherence(blocks);
   const next = blocks.filter((b) => !b.done && b.title.trim() && b.start + b.dur > min).slice(0, 4);
+  const open = todos.filter((t) => !t.done).slice(0, 6);
   return (
-    <aside className="glance" aria-label="Day at a glance">
+    <aside className="glance" aria-label="Today at a glance">
       <span className="label">{dateLabel(today)}</span>
-      <button type="button" className="card click row" onClick={() => { setDate(today); setTab('today'); }}>
+      <button type="button" className="card row" style={{ width: '100%' }} onClick={() => { setDate(today); setTab('today'); }}>
         <MiniRing value={adh?.value ?? 0} size={44} />
-        <span className="col" style={{ gap: 0 }}><span className="big-num" style={{ fontSize: 26 }}>{adh ? `${blocks.filter((b) => b.done && b.title.trim()).length}/${adh.n}` : '0'}</span><span className="label">blocks done · {fmtMin(min)}</span></span>
+        <span className="col" style={{ gap: 0 }}><span className="big-num" style={{ fontSize: '1.625rem' }}>{adh ? `${adh.done}/${adh.n}` : '0'}</span><span className="label">blocks done · {fmtMin(min)}</span></span>
       </button>
-      <span className="label">Up next</span>
-      <div className="card tight sep">{next.length ? next.map((b) => <button type="button" key={b.id} className="row" style={{ width: '100%', minHeight: 44, textAlign: 'left' }} onClick={() => open('block', { id: b.id })}><span className="mono accent small" style={{ width: 44 }}>{fmtMin(b.start)}</span><span className="grow small">{b.title}</span></button>) : <p className="empty">Nothing planned next.</p>}</div>
-      <span className="label">To-dos · {todos.filter((t) => t.done).length}/{todos.length}</span>
-      <div className="card tight sep">{todos.filter((t) => !t.done).slice(0, 6).map((t) => <button type="button" key={t.id} className="row small" style={{ width: '100%', minHeight: 44, textAlign: 'left' }} onClick={() => open('todo', { id: t.id })}>{t.text}</button>)}{todos.every((t) => t.done) && <p className="empty">All clear.</p>}</div>
-      <span className="label">Habits today · {habits.filter((h) => (logs.find((l) => l.habitId === h.id)?.value || 0) > 0).length}/{habits.length}</span>
-      <p className="small muted" style={{ marginTop: 'auto' }}><kbd>N</kbd> capture · <kbd>1</kbd>–<kbd>5</kbd> sections · <kbd>T</kbd> today · <kbd>J</kbd> journal · <kbd>←</kbd><kbd>→</kbd> day</p>
+      <h2 className="label" style={{ fontWeight: 400 }}>Up next</h2>
+      <div className="card tight sep">{next.length ? next.map((b) => <div key={b.id} className="row" style={{ gap: 4, minHeight: 52 }}><Check on={b.done} label={`Complete: ${b.title}`} onToggle={(el) => toggleBlock(b, el)} /><span className="do-time">{fmtMin(b.start)}</span><span className="grow small">{b.title}</span></div>) : <p className="empty">Nothing planned next.</p>}</div>
+      <h2 className="label" style={{ fontWeight: 400 }}>To-dos · {todos.filter((t) => t.done).length}/{todos.length}</h2>
+      <div className="card tight sep">{open.map((t) => <div key={t.id} className="row" style={{ gap: 4, minHeight: 52 }}><Check on={t.done} label={`Complete: ${t.text}`} onToggle={(el) => toggleTodo(t, el)} /><span className="grow small">{t.text}</span></div>)}{open.length === 0 && <p className="empty">All clear.</p>}</div>
+      <h2 className="label" style={{ fontWeight: 400 }}>Habits today</h2>
+      <div className="card tight sep">{habits.map((h) => { const cur = logs.find((l) => l.habitId === h.id)?.value; return <div key={h.id} className="row" style={{ gap: 4, minHeight: 52 }}><Check on={isDone(h, cur)} label={`${isDone(h, cur) ? 'Completed' : 'Complete'}: ${h.name}`} onToggle={(el) => tickHabit(h, today, cur, el)} /><span className="grow small">{h.name}</span></div>; })}{habits.length === 0 && <p className="empty">No habits yet.</p>}</div>
+      <p className="small muted" style={{ marginTop: 'auto', lineHeight: 2 }}><kbd>N</kbd> capture · <kbd>1</kbd>–<kbd>4</kbd> sections · <kbd>T</kbd> today · <kbd>←</kbd><kbd>→</kbd> day · <kbd>/</kbd> search · <kbd>X</kbd> complete the focused row</p>
     </aside>
   );
 }
 
 export function App() {
-  const tab = useApp((s) => s.tab), setTab = useApp((s) => s.setTab), ready = useApp((s) => s.ready), sheet = useApp((s) => s.sheet), toast = useApp((s) => s.toast);
-  const open = useApp((s) => s.open), lock = useApp((s) => s.settings.lock);
+  const tab = useApp((s) => s.tab), setTab = useApp((s) => s.setTab), ready = useApp((s) => s.ready), sheet = useApp((s) => s.sheet), toast = useApp((s) => s.toast), live = useApp((s) => s.live);
+  const date = useApp((s) => s.date), setDate = useApp((s) => s.setDate), viewer = useApp((s) => s.viewer);
+  const open = useApp((s) => s.open), lock = useApp((s) => s.settings.lock), largeText = useApp((s) => s.settings.largeText);
   const { today } = useNow();
+  const reduce = useReduce();
   const wide = useMedia('(min-width: 860px)'), fine = useMedia('(pointer: fine)');
   const [locked, setLocked] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const todayBlocks = useLive(() => byTypeDate<Block>('block', today), [today], []);
-  const glow = adherence(todayBlocks)?.value ?? 0.35;
+  const todayTodos = useLive(() => byTypeDate<Todo>('todo', today), [today], []);
+  // Background brightness follows what is done today: blocks and to-dos together.
+  const total = todayBlocks.filter((b) => b.title.trim()).length + todayTodos.length;
+  const level = total ? (todayBlocks.filter((b) => b.title.trim() && b.done).length + todayTodos.filter((t) => t.done).length) / total : 0.3;
 
+  useEffect(() => { document.documentElement.classList.toggle('rm', reduce); }, [reduce]);
+  useEffect(() => { document.documentElement.classList.toggle('lg', largeText); }, [largeText]);
   // App lock: on start and whenever the app returns from the background.
   useEffect(() => {
     if (!ready || !lock) return;
@@ -102,8 +103,26 @@ export function App() {
     const off = onDirty(soon);
     return () => { clearTimeout(t); off(); };
   }, [ready, today]);
-  // Android back button: close a sheet, else go to Today, else leave the app.
-  useEffect(() => onBack(() => { const s = useApp.getState(); if (s.sheet) { s.close(); return true; } if (s.tab !== 'today') { s.setTab('today'); return true; } return false; }), []);
+  // Photos removed by the user in an earlier session: drop the bytes now (sync, when connected, also clears the remote copy).
+  useEffect(() => {
+    if (!ready) return;
+    void (async () => {
+      const trash = await kvGet<string[]>('photoTrash', []);
+      if (!trash.length || (await kvGet('sync', null))) return;
+      const used = await referencedPhotos(db);
+      await db.photos.bulkDelete(trash.filter((id) => !used.has(id)));
+      await kvSet('photoTrash', []);
+    })();
+  }, [ready]);
+  // Android back button: close the photo, a sheet, an opened calendar day, else go to Today, else leave the app.
+  useEffect(() => onBack(() => {
+    const s = useApp.getState();
+    if (s.viewer) { useApp.setState({ viewer: null }); return true; }
+    if (s.sheet) { s.close(); return true; }
+    if (s.tab === 'calendar' && s.calDay) { transition(() => s.setCalDay(null)); return true; }
+    if (s.tab !== 'today') { s.setTab('today'); return true; }
+    return false;
+  }), []);
   // Hide the bottom bar while the on-screen keyboard is open.
   useEffect(() => {
     const vv = window.visualViewport; if (!vv) return;
@@ -115,53 +134,59 @@ export function App() {
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement;
-      if (e.metaKey || e.ctrlKey || e.altKey || el.closest('input,textarea,select,[contenteditable]')) return;
+      if (e.metaKey || e.ctrlKey || e.altKey || el.closest('input,textarea,select,[contenteditable],[role=slider]')) return;
       const s = useApp.getState();
-      if (s.sheet) return;
+      if (s.sheet || s.viewer) return;
       const k = e.key.toLowerCase();
+      const stepDay = (n: number) => { if (s.tab === 'calendar' && s.calDay) s.setCalDay(addDays(s.calDay, n)); else if (s.tab !== 'calendar') s.setDate(addDays(s.date, n)); };
       if (k === 'n') { e.preventDefault(); s.open('capture'); }
-      else if (k >= '1' && k <= '5') s.setTab(TABS[+k - 1]);
+      else if (k >= '1' && k <= '4') s.setTab(TABS[+k - 1]);
       else if (k === 't') { s.setDate(today); s.setTab('today'); }
-      else if (k === 'j') s.setTab('journal');
-      else if (k === 'arrowleft') s.setDate(addDays(s.date, -1));
-      else if (k === 'arrowright') s.setDate(addDays(s.date, 1));
+      else if (k === '/') { e.preventDefault(); s.setCalDay(null); s.setTab('calendar'); setTimeout(() => document.querySelector<HTMLInputElement>('input[type=search]')?.focus(), 350); }
+      else if (k === 'arrowleft') stepDay(-1);
+      else if (k === 'arrowright') stepDay(1);
     };
     window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key);
   }, [today]);
 
-  if (!ready) return <Sky glow={0.3} />;
-  const tabs = (cls: string, id: string) => TABS.map((t, i) => (
+  if (!ready) return <div className="nova-still" aria-hidden="true" />;
+  const tabs = (cls: string) => TABS.map((t, i) => (
     <button type="button" key={t} className={`tab${tab === t ? ' on' : ''}`} aria-current={tab === t ? 'page' : undefined} onClick={() => setTab(t)}>
-      {tab === t && <motion.span layoutId={`pill-${id}`} className="pill" transition={SPRING} />}
+      {tab === t && <motion.span layoutId={`pill-${cls}`} className="pill" transition={SPRING} />}
       <Icon name={t} size={22} />{LABEL[t]}{cls === 'side' && <kbd>{i + 1}</kbd>}
     </button>
   ));
+  const modal = locked || !!viewer;
   return (
-    <MotionConfig reducedMotion="user">
-      <Sky glow={glow} />
-      <div className="shell" inert={locked || undefined}>
-        <nav className="side" aria-label="Sections">
-          <div className="row" style={{ padding: '0 14px 18px', fontFamily: 'var(--f-head)', fontWeight: 600, fontSize: 18 }}>LOG<span className="muted" style={{ fontWeight: 400 }}>/PLAN</span></div>
-          {wide && tabs('side', 'side')}
+    <MotionConfig reducedMotion={reduce ? 'always' : 'never'}>
+      <Supernova level={level} />
+      <div className="shell" inert={modal || undefined}>
+        {wide && <nav className="side" aria-label="Sections">
+          <div className="row" style={{ padding: '0 14px 18px', fontFamily: 'var(--f-head)', fontWeight: 600, fontSize: '1.125rem' }}>LOG<span className="muted" style={{ fontWeight: 400 }}>/PLAN</span></div>
+          {tabs('side')}
           <button type="button" className="tab" style={{ marginTop: 'auto' }} onClick={() => open('settings')}><Icon name="gear" />Settings</button>
-        </nav>
+        </nav>}
         <main className="main" ref={mainRef} id="main">
-          {tab === 'today' && <Today />}
-          {tab === 'journal' && <Journal />}
+          {tab === 'today' && <DayView date={date} onDate={setDate} mode="today" />}
+          {tab === 'calendar' && <Calendar />}
+          {tab === 'meals' && <Meals />}
           {tab === 'habits' && <Habits />}
-          {tab === 'insights' && <Insights />}
-          {tab === 'plan' && <Plan />}
         </main>
         {wide && <Glance />}
-        {!wide && <nav className="nav" aria-label="Sections">{tabs('nav', 'nav')}</nav>}
+        {!wide && <nav className="nav" aria-label="Sections">{tabs('nav')}</nav>}
         {!sheet && <button type="button" className="fab" aria-label="Quick capture" onClick={() => open('capture')}><Icon name="plus" size={24} /></button>}
       </div>
       <Sheets />
-      <AnimatePresence>
-        {toast && <motion.div key={toast.id} className="toast" role="status" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }} transition={SPRING}>
-          <span>{toast.text}</span>{toast.action && <button type="button" onClick={() => { toast.action!.run(); useApp.setState({ toast: null }); }}>{toast.action.label}</button>}
-        </motion.div>}
-      </AnimatePresence>
+      <PhotoViewer />
+      {/* Always in the page, so screen readers announce what appears inside. */}
+      <div className="toast-zone" role="status" aria-live="polite">
+        <AnimatePresence>
+          {toast && <motion.div key={toast.id} className="toast" initial={reduce ? { opacity: 0 } : { opacity: 0, y: 16 }} animate={reduce ? { opacity: 1 } : { opacity: 1, y: 0 }} exit={reduce ? { opacity: 0 } : { opacity: 0, y: 8 }} transition={reduce ? { duration: 0.15 } : SPRING}>
+            <span style={{ overflowWrap: 'anywhere' }}>{toast.text}</span>{toast.action && <button type="button" onClick={() => { toast.action!.run(); useApp.setState({ toast: null }); useApp.getState().announce('Undone'); }}>{toast.action.label}</button>}
+          </motion.div>}
+        </AnimatePresence>
+      </div>
+      <div className="sr" role="status" aria-live="polite">{live}</div>
       {locked && <div className="lock" role="dialog" aria-modal="true" aria-label="Log/Plan is locked">
         <span className="accent"><Icon name="lock" size={40} /></span><h1>Locked</h1>
         <button type="button" className="btn primary" onClick={async () => { if (await unlock()) setLocked(false); }}>Unlock</button>

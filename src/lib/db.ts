@@ -3,7 +3,8 @@ import type { Rec, RecType } from './model';
 import { tick } from './hlc';
 
 export interface KV { key: string; value: unknown }
-export interface Photo { id: string; blob: Blob; createdAt: number }
+/** A stored picture. v2.1 writes `buf` (JPEG bytes, at most 1280 px on the long side) and `thumb`; v2.0 journal photos have `blob`. */
+export interface Photo { id: string; createdAt: number; blob?: Blob; buf?: ArrayBuffer; thumb?: ArrayBuffer; mime?: string }
 
 export class LPDB extends Dexie {
   rec!: Table<Rec, string>;

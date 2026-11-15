@@ -3,11 +3,12 @@ import { addDays, daysBetween, dow, firstISOMonday, fmtDur, fmtMin, isoWeek, log
 import { observe, resetHlcForTests, setNode, tick } from '../src/lib/hlc';
 import { bucketOf, mergeRecords, pruneTombstones } from '../src/lib/merge';
 import { decryptJSON, deriveKey, encryptJSON, keyFromRecovery, makeKeyCheck, randomBytes, verifyKey } from '../src/lib/crypto';
-import { automaticityCurve, consistency, forgivingStreak, isDue } from '../src/lib/habits';
-import { LADDER, nextInterval, review } from '../src/lib/spaced';
-import { adherence, bestHours, habitLift, overrunFactor, sleepRegularity, adherenceByDay } from '../src/lib/insights';
+import { consistency, forgivingStreak, isDue } from '../src/lib/habits';
+import { adherence, adherenceByDay, sleepDur, sleepMin, sleepPos } from '../src/lib/day';
+import { searchRecs } from '../src/lib/search';
+import { fitSize } from '../src/lib/photos';
 import { planNotifications, HORIZON_DAYS } from '../src/lib/notif';
-import type { Block, Habit, Rec, Sleep, Todo } from '../src/lib/model';
+import type { Block, Habit, Rec, Todo } from '../src/lib/model';
 
 describe('dates', () => {
   it('ISO weeks, including year boundaries', () => {
@@ -159,62 +160,55 @@ describe('habits', () => {
     expect(consistency(habit(), logsFor([1, 2, 3].map((i) => addDays(T, -i))), T, 7)).toBeCloseTo(3 / 6);
     expect(consistency(habit({ createdOn: T }), {}, T)).toBeNull();
   });
-  it('the modelled curve reaches about 95% after 66 repetitions and dips slightly on a miss', () => {
-    const start = addDays(T, -65);
-    const all = Array.from({ length: 66 }, (_, i) => addDays(start, i));
-    const c = automaticityCurve(habit({ createdOn: start }), logsFor(all), T);
-    expect(c).toHaveLength(66);
-    expect(c[65]).toBeCloseTo(0.95, 2);
-    const c2 = automaticityCurve(habit({ createdOn: start }), logsFor(all.filter((_, i) => i !== 30)), T);
-    expect(c2[30]).toBeLessThan(c2[29]);
-    expect(c2[29] - c2[30]).toBeLessThan(0.01);
-  });
-});
-
-describe('spaced review', () => {
-  it('expands on success and resets on failure', () => {
-    expect(nextInterval(0, true)).toBe(1);
-    expect(nextInterval(1, true)).toBe(3);
-    expect(nextInterval(30, true)).toBe(60);
-    expect(nextInterval(120, true)).toBe(LADDER[LADDER.length - 1]);
-    expect(nextInterval(60, false)).toBe(1);
-    const r = review({ interval: 3, reviews: [] }, true, '2026-11-14');
-    expect(r).toMatchObject({ interval: 7, due: '2026-11-21' });
-    expect(r.reviews).toHaveLength(1);
-  });
 });
 
 const block = (o: Partial<Block>): Block => ({ id: Math.random().toString(36), type: 'block', updatedAt: '', date: '2026-11-10', start: 540, dur: 60, title: 'x', log: '', cat: '', done: false, ...o });
-describe('insights', () => {
+describe('day helpers', () => {
   it('adherence counts only planned blocks', () => {
-    expect(adherence([block({ done: true }), block({}), block({ title: '', log: 'note' })])).toEqual({ value: 0.5, n: 2 });
+    expect(adherence([block({ done: true }), block({}), block({ title: '', log: 'note' })])).toEqual({ value: 0.5, n: 2, done: 1 });
     expect(adherence([])).toBeNull();
+    const by = adherenceByDay([block({ date: '2026-11-01', done: true }), block({ date: '2026-11-02' })]);
+    expect(by.get('2026-11-01')!.value).toBe(1);
+    expect(by.get('2026-11-02')!.done).toBe(0);
   });
-  it('best hours need a minimum sample', () => {
-    const bs = [...Array(5).fill(0).map(() => block({ start: 540, done: true })), ...Array(5).fill(0).map((_, i) => block({ start: 900, done: i < 2 })), block({ start: 1200, done: true })];
-    expect(bestHours(bs)).toEqual([{ hour: 9, rate: 1, n: 5 }, { hour: 15, rate: 0.4, n: 5 }]);
+  it('sleep arc maps 18:00..12:00 to 0..1 and back, across midnight', () => {
+    expect(sleepPos(18 * 60)).toBe(0);
+    expect(sleepPos(12 * 60)).toBe(1);
+    expect(sleepPos(3 * 60)).toBeCloseTo(0.5);
+    expect(sleepMin(0.5)).toBe(180);
+    expect(sleepMin(sleepPos(23 * 60 + 35))).toBe(23 * 60 + 35);
+    expect(sleepMin(sleepPos(6 * 60 + 50))).toBe(6 * 60 + 50);
+    expect(sleepPos(13 * 60)).toBe(1); // just past the window: clamps to the wake end
+    expect(sleepPos(17 * 60)).toBe(0); // just before it: clamps to the bed end
+    expect(sleepDur({ bed: 23 * 60 + 30, wake: 7 * 60 })).toBe(450);
+    expect(sleepDur({ bed: 60, wake: 8 * 60 })).toBe(420);
   });
-  it('overrun factor is the median ratio and needs 5 samples', () => {
-    expect(overrunFactor([block({ done: true, actualDur: 90 })])).toBeNull();
-    const bs = [60, 75, 90, 90, 120].map((a) => block({ done: true, actualDur: a }));
-    expect(overrunFactor(bs)).toEqual({ value: 1.5, n: 5 });
+  it('photo downscale keeps the aspect ratio and never enlarges', () => {
+    expect(fitSize(4000, 3000, 1280)).toEqual({ w: 1280, h: 960 });
+    expect(fitSize(3000, 4000, 1280)).toEqual({ w: 960, h: 1280 });
+    expect(fitSize(800, 600, 1280)).toEqual({ w: 800, h: 600 });
   });
-  it('habit lift compares days with and without the habit', () => {
-    const days = Array.from({ length: 14 }, (_, i) => addDays('2026-11-01', i));
-    const bs = days.flatMap((d, i) => [block({ date: d, done: i < 7 }), block({ date: d, done: true })]);
-    const lift = habitLift([habit()], { h: new Set(days.slice(0, 7)) }, adherenceByDay(bs));
-    expect(lift[0]).toMatchObject({ withN: 7, withoutN: 7 });
-    expect(lift[0].lift).toBeCloseTo(0.5);
-    expect(habitLift([habit()], { h: new Set(days.slice(0, 3)) }, adherenceByDay(bs))).toHaveLength(0);
+});
+
+describe('search', () => {
+  const recs: Rec[] = [
+    block({ id: 'b1', date: '2026-11-10', title: 'Deep work: RTL review', log: 'closed 3 comments' }),
+    block({ id: 'b2', date: '2026-11-12', title: 'Gym', start: 1080 }),
+    { id: 't1', type: 'todo', updatedAt: '', date: '2026-11-12', text: 'Review timing report', done: true },
+    { id: 'm1', type: 'meal', updatedAt: '', date: '2026-11-11', time: 780, name: 'Dal rice', tag: 'Lunch' },
+    { id: 'journal:2026-11-09', type: 'journal', updatedAt: '', date: '2026-11-09', intention: 'Finish the review calmly', text: 'private review notes', win: '', lesson: '', ifThen: '', tags: [], photos: [] },
+    { id: 'gone', type: 'todo', updatedAt: '', date: '2026-11-12', deleted: true } as Rec,
+  ];
+  it('finds blocks, to-dos, meals and morning intentions, newest day first', () => {
+    expect(searchRecs(recs, 'review').map((h) => h.id)).toEqual(['t1', 'b1', 'journal:2026-11-09']);
+    expect(searchRecs(recs, 'dal')[0]).toMatchObject({ kind: 'meal', date: '2026-11-11' });
+    expect(searchRecs(recs, 'lunch')).toHaveLength(1);
   });
-  it('sleep regularity handles bedtimes either side of midnight', () => {
-    const s = (bed: number, wake: number, i: number): Sleep => ({ id: `s${i}`, type: 'sleep', updatedAt: '', date: addDays('2026-11-01', i), bed, wake });
-    const r = sleepRegularity([1430, 10, 1430, 10, 1430, 10, 1430, 10].map((b, i) => s(b, 420, i)))!;
-    expect(r.n).toBe(8);
-    expect(r.value.bedSd).toBeCloseTo(10);
-    expect(r.value.wakeSd).toBe(0);
-    expect(r.value.avgDur).toBeCloseTo(420);
-    expect(sleepRegularity([s(1380, 420, 0)])).toBeNull();
+  it('needs every word, ignores case, deleted records and removed journal fields', () => {
+    expect(searchRecs(recs, 'RTL comments').map((h) => h.id)).toEqual(['b1']);
+    expect(searchRecs(recs, 'rtl gym')).toHaveLength(0);
+    expect(searchRecs(recs, 'private')).toHaveLength(0);
+    expect(searchRecs(recs, '   ')).toHaveLength(0);
   });
 });
 

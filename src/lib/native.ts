@@ -9,8 +9,11 @@ import type { PlannedNotif } from './notif';
 
 export const isNative = Capacitor.isNativePlatform();
 
+let hapticsOn = true;
+/** The in-app Haptics switch. */
+export function setHaptics(on: boolean) { hapticsOn = on; }
 export function haptic(kind: 'light' | 'medium' | 'success' = 'light') {
-  if (!isNative) return;
+  if (!isNative || !hapticsOn) return;
   if (kind === 'success') void Haptics.notification({ type: NotificationType.Success }).catch(() => {});
   else void Haptics.impact({ style: kind === 'medium' ? ImpactStyle.Medium : ImpactStyle.Light }).catch(() => {});
 }

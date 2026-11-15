@@ -1,155 +1,261 @@
-import { expect, test, type Page } from '@playwright/test';
-import { seedV1 } from './seed';
+import { expect, test } from '@playwright/test';
+import { isPhone, main, noDialog, pngBuffer, project, reduced, settle, shot, start, tab } from './helpers';
 
-const shot = (page: Page, name: string) => page.screenshot({ path: `docs/screenshots/${test.info().project.name}/${name}.png` });
-const tab = (page: Page, name: string) => page.getByRole('navigation', { name: 'Sections' }).getByRole('button', { name: new RegExp(`^${name}`) }).click();
-const settle = (page: Page) => page.waitForTimeout(test.info().project.name.includes('reduced') ? 150 : 900);
-
-async function start(page: Page) {
-  const errors: string[] = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => { if (m.type() === 'error' && !m.text().includes('Failed to load resource')) errors.push(m.text()); });
-  page.on('response', (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
-  await seedV1(page);
-  await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Good afternoon');
-  return errors;
-}
-/** Every button must have an accessible name; on the phone, every tappable control must be at least 44 px in one direction and 36 in the other. */
-async function audit(page: Page, where: string) {
-  const problems = await page.evaluate((phone) => {
-    const out: string[] = [];
-    const vis = (el: Element) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== 'hidden' && cs.display !== 'none' && r.bottom > 0 && r.top < innerHeight; };
-    document.querySelectorAll('button, a[href], [role=button], input:not([type=hidden]), select, textarea').forEach((el) => {
-      if (!vis(el) || el.closest('[inert]')) return;
-      const name = (el.getAttribute('aria-label') || (el as HTMLElement).innerText || (el as HTMLInputElement).placeholder || el.closest('label')?.textContent || '').trim();
-      if (!name) out.push(`no accessible name: ${el.outerHTML.slice(0, 90)}`);
-      if (!phone || el.closest('.heat, .orbit-dial') || (el as HTMLInputElement).type === 'file') return; // dense charts: each has full-size alternative controls
-      const r = ((el as HTMLInputElement).type === 'checkbox' && el.closest('label') ? el.closest('label')! : el).getBoundingClientRect(); // a wrapping label is the real target
-      const after = getComputedStyle(el, '::after');
-      const grow = after.content !== 'none' && after.position === 'absolute' ? -2 * parseFloat(after.top || '0') : 0; // extended hit area
-      const w = r.width, h = r.height + (grow > 0 ? grow : 0);
-      if (Math.max(w, h) < 43.5 || Math.min(w, h) < 27.5) out.push(`small target ${Math.round(w)}x${Math.round(h)}: ${name.slice(0, 40)}`);
-    });
-    return out;
-  }, test.info().project.name.startsWith('phone'));
-  expect(problems, `accessibility problems on ${where}`).toEqual([]);
-}
-
-test('migrates v1 data, then every screen renders and passes basic accessibility checks', async ({ page }) => {
+test('v1 data migrates, and every screen of v2.1 works', async ({ page }) => {
+  test.setTimeout(150000);
   const errors = await start(page);
-  const phone = test.info().project.name.startsWith('phone');
+  const m = main(page);
 
-  // Today: migrated blocks, to-dos, habits and the carry-over prompt.
-  await expect(page.locator('#main').getByRole('button', { name: /5\/9 blocks done/ })).toBeVisible();
-  await expect(page.getByText('1 unfinished from yesterday')).toBeVisible();
-  await expect(page.getByText('IELTS exam · 5d')).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'Welcome to v2' })).toBeVisible();
-  await settle(page); await shot(page, '01-today'); await audit(page, 'Today');
+  // ---- Today ----
+  await expect(m.getByRole('button', { name: /14:20 5\/9 blocks done/ })).toBeVisible();
+  await expect(page.locator('[data-nova]')).toHaveAttribute('data-nova', reduced() ? 'still' : 'live');
+  await expect(page.locator('html')).toHaveClass(reduced() ? /rm/ : /^(?!.*rm)/);
+  await settle(page, 1600);
+  await shot(page, '01-today');
 
-  await page.getByRole('button', { name: 'Carry over' }).click();
-  await expect(page.locator('#main').getByRole('button', { name: 'Email professor' })).toBeVisible();
-  await page.getByLabel('The one thing').fill('Draft the v2 design brief');
-  await page.getByLabel('The one thing').press('Enter');
+  // One-tap completion: exactly one tap on the visible check, and nothing opens.
+  const blocks = m.getByRole('region', { name: 'Blocks' });
+  const study = blocks.getByRole('checkbox', { name: 'Complete: Study: recall practice' }).first();
+  await expect(study).toHaveAttribute('aria-checked', 'false');
+  const box = (await study.boundingBox())!;
+  expect(Math.min(box.width, box.height)).toBeGreaterThanOrEqual(48);
+  await study.click();
+  await expect(blocks.getByRole('checkbox', { name: 'Completed: Study: recall practice' }).first()).toHaveAttribute('aria-checked', 'true');
+  await noDialog(page);
+  await expect(m.getByRole('button', { name: /14:20 6\/9 blocks done/ })).toBeVisible();
+  await expect(page.locator('.toast-zone')).toContainText('Done: Study: recall practice');
+  await shot(page, '02-completed-with-undo');
+  // Undo restores it.
+  await page.locator('.toast-zone').getByRole('button', { name: 'Undo' }).click();
+  await expect(m.getByRole('button', { name: /14:20 5\/9 blocks done/ })).toBeVisible();
 
-  // Timeline, and editing a block.
-  await page.getByRole('button', { name: /Day ring/ }).click();
-  await expect(page.getByRole('heading', { name: 'Timeline' })).toBeVisible();
-  await settle(page); await shot(page, '02-timeline'); await audit(page, 'Timeline');
-  await page.getByRole('button', { name: /^Study: recall practice/ }).first().click();
-  const sheet = page.getByRole('dialog', { name: 'Block' });
-  await expect(sheet).toBeVisible();
-  await sheet.getByPlaceholder('After lunch, at my desk…').fill('After lunch, at desk');
-  await settle(page); await shot(page, '03-block-sheet'); await audit(page, 'Block sheet');
-  await sheet.getByRole('checkbox', { name: 'Mark block done' }).click();
-  await sheet.getByRole('button', { name: '+15m' }).click();
-  await sheet.getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Back to day overview' }).click();
-  await expect(page.locator('#main').getByRole('button', { name: /6\/9 blocks done/ })).toBeVisible();
+  // To-dos: one tap as well.
+  const todos = m.getByRole('region', { name: 'To-dos' });
+  await todos.getByRole('checkbox', { name: 'Complete: Book dentist' }).click();
+  await expect(todos.getByRole('checkbox', { name: 'Completed: Book dentist' })).toBeVisible();
+  await noDialog(page);
 
-  // Quick capture: a to-do in two taps plus typing.
-  await page.getByRole('button', { name: 'Quick capture' }).click();
-  await page.getByLabel('New to-do').fill('Buy protein');
-  await settle(page); await shot(page, '04-capture');
-  await page.getByLabel('New to-do').press('Enter');
-  await expect(page.locator('#main').getByRole('button', { name: 'Buy protein' })).toBeVisible();
+  // Swipe right to complete (touch gesture; the check is the alternative). Not offered with reduced motion.
+  if (isPhone() && !reduced()) {
+    const row = todos.getByRole('button', { name: 'Edit to-do Renew library card' });
+    const r = (await row.boundingBox())!;
+    await page.mouse.move(r.x + 20, r.y + r.height / 2); await page.mouse.down();
+    for (let i = 1; i <= 8; i++) { await page.mouse.move(r.x + 20 + i * 22, r.y + r.height / 2); await page.waitForTimeout(30); }
+    await page.mouse.up();
+    await expect(todos.getByRole('checkbox', { name: 'Completed: Renew library card' })).toBeVisible();
+    await noDialog(page);
+  }
+  // Keyboard on the laptop: X (or Space) on the focused row completes it; Enter opens it for editing.
+  if (!isPhone()) {
+    await blocks.getByRole('button', { name: /Edit block Gym/ }).focus();
+    await page.keyboard.press('x');
+    await expect(blocks.getByRole('checkbox', { name: 'Completed: Gym' })).toBeVisible();
+    await page.keyboard.press(' ');
+    await expect(blocks.getByRole('checkbox', { name: 'Complete: Gym' })).toBeVisible();
+    await noDialog(page);
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Block' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await noDialog(page);
+  }
 
-  // Journal.
-  await tab(page, 'Journal');
-  await page.getByLabel('Morning intention').fill('Finish the design brief before lunch.');
-  await page.getByRole('radio', { name: /Mood 4 of 5/ }).click();
-  await page.getByLabel('One win').fill('Closed three review comments.');
-  await page.getByLabel('Add tag').fill('work'); await page.getByLabel('Add tag').press('Enter');
-  await settle(page); await shot(page, '05-journal'); await audit(page, 'Journal');
-  await page.getByRole('button', { name: /^Meals/ }).click();
-  await expect(page.getByRole('dialog', { name: 'Meals' }).getByText('Dal rice').first()).toBeVisible();
+  // Morning intention saves as you type and survives leaving the day.
+  await m.getByRole('textbox', { name: 'Morning intention' }).fill('Ship the review calmly');
+  await page.waitForTimeout(800);
+  // Past days: one step with the arrow (or a swipe on the date).
+  await m.getByRole('button', { name: 'Previous day' }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Friday 13 November');
+  await expect(m.getByRole('textbox', { name: 'Morning intention' })).toHaveValue('');
+  await settle(page);
+  await shot(page, '03-yesterday');
+  await m.getByRole('button', { name: 'Back to today' }).click();
+  await expect(m.getByRole('textbox', { name: 'Morning intention' })).toHaveValue('Ship the review calmly');
+
+  // Sleep: log, then adjust with the typed field and with the keyboard slider.
+  await m.getByRole('button', { name: 'Log sleep' }).click();
+  const sleep = m.getByRole('region', { name: 'Sleep' });
+  await expect(sleep).toContainText('8h');
+  await sleep.getByLabel('Bedtime').last().fill('23:30');
+  await expect(sleep).toContainText('7h 30m');
+  await sleep.getByRole('slider', { name: 'Wake time' }).focus();
+  await page.keyboard.press('ArrowLeft'); await page.keyboard.press('ArrowLeft');
+  await expect(sleep).toContainText('7h 20m');
+  await expect(sleep.getByLabel('Woke up')).toHaveValue('06:50');
+  await expect(page.locator('.sr[role=status]')).toContainText('Sleep saved: 7h 20m');
+  await sleep.scrollIntoViewIfNeeded(); await settle(page);
+  await shot(page, '04-sleep-and-habits');
+  // Habit for today from the Today page.
+  await m.getByRole('checkbox', { name: /^Gym: not done/ }).click();
+  await expect(m.getByRole('checkbox', { name: /^Gym: done/ })).toBeVisible();
+
+  // Hour view: every block has its own check there too.
+  await m.evaluate((el) => el.scrollTo({ top: 0 }));
+  await m.getByRole('button', { name: /blocks done\. Opens/ }).click();
+  await expect(page.getByRole('heading', { name: 'Hour view' })).toBeVisible();
+  await settle(page);
+  await shot(page, '05-hour-view');
+  await m.getByRole('checkbox', { name: 'Complete: Read' }).click();
+  await expect(m.getByRole('checkbox', { name: 'Completed: Read' })).toBeVisible();
+  await noDialog(page);
+  await m.getByRole('button', { name: 'Back to the day overview' }).click();
+
+  // Block sheet for editing.
+  await blocks.getByRole('button', { name: /Edit block Gym/ }).click();
+  await expect(page.getByRole('dialog', { name: 'Block' })).toBeVisible();
+  await settle(page);
+  await shot(page, '06-block-sheet');
   await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
-  await page.getByRole('button', { name: 'Search journal' }).click();
-  await page.getByLabel('Search journal').fill('review');
-  await expect(page.getByText('1 entry')).toBeVisible();
-  await page.getByRole('button', { name: 'Close search' }).click();
 
-  // Habits: migrated streaks, detail view, new habit with a cue.
+  // ---- Calendar ----
+  await tab(page, 'Calendar');
+  await expect(page.getByRole('heading', { name: 'November 2026' })).toBeVisible();
+  const cell = m.getByRole('button', { name: /^Friday 13 November\./ });
+  await expect(cell).toHaveAccessibleName(/\d of 9 blocks done/);
+  await expect(m.getByRole('button', { name: /^Saturday 14 November, today\..*meals logged, sleep logged/ })).toBeVisible();
+  await expect(m.getByRole('button', { name: /^Thursday 19 November\..*countdown: IELTS exam/ })).toBeVisible();
+  await settle(page, 1300);
+  await shot(page, '07-calendar');
+  // A past day opens in full and is editable there, with the same one-tap checks.
+  await cell.click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Friday 13 November');
+  await settle(page);
+  await shot(page, '08-calendar-day');
+  const past = m.getByRole('region', { name: 'To-dos' });
+  await past.getByRole('checkbox', { name: 'Complete: Email professor' }).click();
+  await expect(past.getByRole('checkbox', { name: 'Completed: Email professor' })).toBeVisible();
+  await m.getByRole('button', { name: 'Back to the month' }).click();
+  await expect(page.getByRole('heading', { name: 'November 2026' })).toBeVisible();
+  // Search across all days, then jump to the day.
+  await m.getByRole('searchbox', { name: 'Search all days' }).fill('dal rice');
+  await expect(m.getByRole('region', { name: 'Search results' })).toContainText('Meal');
+  await m.getByRole('searchbox').fill('rtl review');
+  await expect(m.getByRole('status')).toContainText('60+ results');
+  await settle(page);
+  await shot(page, '09-search');
+  await m.getByRole('region', { name: 'Search results' }).getByRole('button').nth(6).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText(/ (November|October)$/);
+  await m.getByRole('button', { name: 'Back to the month' }).click();
+  // Month navigation.
+  await m.getByRole('button', { name: 'Previous month' }).click();
+  await expect(page.getByRole('heading', { name: 'October 2026' })).toBeVisible();
+  await m.getByRole('button', { name: 'This month' }).click();
+  // Setup lives here.
+  await m.getByRole('button', { name: 'Setup' }).click();
+  await expect(m.getByRole('button', { name: 'Edit countdown IELTS exam' })).toBeVisible();
+  await m.getByRole('textbox', { name: /Name for a template/ }).fill('Standard day');
+  await m.getByRole('region', { name: 'Day templates' }).getByRole('button', { name: 'Save' }).click();
+  await expect(m.getByText(/Standard day/).first()).toBeVisible();
+  await m.getByRole('textbox', { name: 'New category' }).fill('Errands');
+  await m.getByRole('region', { name: 'Day and categories' }).getByRole('button', { name: 'Add' }).click();
+  await expect(m.getByRole('button', { name: 'Remove category Errands' })).toBeVisible();
+  await settle(page);
+  await shot(page, '10-setup');
+  await m.getByRole('button', { name: 'Month', exact: true }).click();
+
+  // ---- Meals, with a photo ----
+  await tab(page, 'Meals');
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Meals');
+  await m.getByLabel('What did you eat?').fill('Paneer wrap');
+  await m.getByRole('button', { name: 'Add meal' }).click();
+  const meal = m.getByRole('region', { name: /^Paneer wrap/ });
+  await expect(meal).toBeVisible();
+  await meal.getByLabel('Choose photos for Paneer wrap').setInputFiles({ name: 'lunch.png', mimeType: 'image/png', buffer: await pngBuffer(page) });
+  const thumb = meal.getByRole('button', { name: /Photo 1 of Paneer wrap/ });
+  await expect(thumb.locator('img')).toBeVisible();
+  // Stored downscaled (1600x1200 in, at most 1280 on the long side) with a thumbnail.
+  const stored = await page.evaluate(async () => {
+    const db: IDBDatabase = await new Promise((res) => { const r = indexedDB.open('logplan-v2'); r.onsuccess = () => res(r.result); });
+    const all: any[] = await new Promise((res) => { const r = db.transaction('photos').objectStore('photos').getAll(); r.onsuccess = () => res(r.result); });
+    const bmp = await createImageBitmap(new Blob([all[0].buf], { type: 'image/jpeg' })), t = await createImageBitmap(new Blob([all[0].thumb], { type: 'image/jpeg' }));
+    return { n: all.length, w: bmp.width, h: bmp.height, tw: t.width, bytes: all[0].buf.byteLength };
+  });
+  expect(stored).toMatchObject({ n: 1, w: 1280, h: 960, tw: 320 });
+  expect(stored.bytes).toBeLessThan(400000);
+  await settle(page);
+  await shot(page, '11-meals');
+  await thumb.click();
+  const viewer = page.getByRole('dialog', { name: 'Photo of Paneer wrap' });
+  await expect(viewer.getByRole('img')).toBeVisible();
+  await settle(page);
+  await shot(page, '12-photo-full-screen');
+  await page.keyboard.press('Escape');
+  await noDialog(page);
+  // Delete with undo.
+  await thumb.click();
+  await viewer.getByRole('button', { name: 'Delete photo' }).click();
+  await expect(meal.getByRole('button', { name: /Photo 1/ })).toHaveCount(0);
+  await page.locator('.toast-zone').getByRole('button', { name: 'Undo' }).click();
+  await expect(meal.getByRole('button', { name: /Photo 1/ })).toBeVisible();
+  // Meals of another day.
+  await m.getByRole('button', { name: 'Previous day' }).click();
+  await expect(m.getByText('No meals logged for this day.')).toBeVisible();
+  await m.getByRole('button', { name: 'Back to today' }).click();
+  await expect(m.getByRole('region', { name: /^Dal rice/ })).toBeVisible();
+
+  // ---- Habits ----
   await tab(page, 'Habits');
-  await expect(page.getByRole('region', { name: 'Gym' })).toBeVisible();
-  await page.getByRole('region', { name: 'Gym' }).getByRole('button', { name: /^Gym/ }).click();
-  await settle(page); await shot(page, '06-habits'); await audit(page, 'Habits');
-  await page.getByRole('button', { name: 'Add habit' }).click();
-  const hs = page.getByRole('dialog', { name: 'Habit' });
-  await hs.getByPlaceholder('Gym').fill('Stretch');
-  await hs.getByPlaceholder(/After work/).fill('After brushing teeth');
-  await hs.getByRole('tab', { name: 'Per week' }).click();
-  await settle(page); await shot(page, '07-habit-sheet'); await audit(page, 'Habit sheet');
-  await hs.getByRole('button', { name: 'Add habit' }).click();
-  await expect(page.getByRole('region', { name: 'Stretch' })).toBeVisible();
+  const gym = m.getByRole('region', { name: 'Gym' });
+  await expect(gym.getByRole('checkbox', { name: 'Completed today: Gym' })).toBeVisible();
+  await gym.getByRole('button', { name: /Gym\. Show details/ }).click();
+  await expect(gym.getByRole('img', { name: /last 53 weeks: done on \d+ days/ })).toBeVisible();
+  await expect(gym).toContainText('done, last 4 weeks');
+  await settle(page);
+  await shot(page, '13-habits');
+  await gym.getByRole('checkbox', { name: 'Completed today: Gym' }).click();
+  await expect(gym.getByRole('checkbox', { name: 'Complete today: Gym' })).toBeVisible();
 
-  // Insights from 12 weeks of migrated data.
-  await tab(page, 'Insights');
-  await expect(page.getByRole('region', { name: 'Best hours' }).getByText(/% of \d+/).first()).toBeVisible();
-  await settle(page); await shot(page, '08-insights'); await audit(page, 'Insights');
+  // ---- Quick capture ----
+  await tab(page, 'Today');
+  await page.getByRole('button', { name: 'Quick capture' }).click();
+  const cap = page.getByRole('dialog', { name: 'Quick capture' });
+  await cap.getByLabel('New to-do').fill('Captured in two taps');
+  await settle(page);
+  await shot(page, '14-quick-capture');
+  await cap.getByRole('button', { name: 'Add', exact: true }).click();
+  await expect(m.getByRole('button', { name: 'Edit to-do Captured in two taps' })).toBeVisible();
+  await page.getByRole('button', { name: 'Quick capture' }).click();
+  await cap.getByRole('button', { name: 'Meal' }).click();
+  await cap.getByRole('button', { name: 'Dal rice' }).click();
+  await expect(page.locator('.toast-zone')).toContainText('Meal added to today');
 
-  // Plan: week, month, study, setup, weekly review, orbit.
-  await tab(page, 'Plan');
-  await expect(page.getByText('W46')).toBeVisible();
-  await settle(page); await shot(page, '09-plan-week'); await audit(page, 'Plan week');
-  await page.getByRole('tab', { name: 'Month' }).click(); await settle(page); await shot(page, '10-plan-month'); await audit(page, 'Plan month');
-  await page.getByRole('tab', { name: 'Study' }).click();
-  await page.getByRole('button', { name: 'Topic' }).click();
-  await page.getByRole('dialog').getByPlaceholder('CMOS inverter delay').fill('Setup and hold time');
-  await page.getByRole('dialog').getByRole('button', { name: /Add topic/ }).click();
-  await expect(page.getByRole('button', { name: /Setup and hold time/ })).toBeVisible();
-  await settle(page); await shot(page, '11-plan-study'); await audit(page, 'Plan study');
-  await page.getByRole('tab', { name: 'Setup' }).click(); await settle(page); await shot(page, '12-plan-setup'); await audit(page, 'Plan setup');
-  await page.getByRole('tab', { name: 'Week' }).click();
-  await page.getByRole('button', { name: /weekly review/i }).click();
-  await settle(page); await shot(page, '13-review'); await audit(page, 'Weekly review');
-  for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByLabel('Most likely obstacle').fill('Late meetings');
-  await page.getByRole('button', { name: 'Finish review' }).click();
-  await expect(page.getByRole('heading', { name: 'Week 47 begins' })).toBeVisible();
-  await page.waitForTimeout(700); await shot(page, '14-review-ceremony');
-  await expect(page.getByText('Weekly review · done')).toBeVisible({ timeout: 8000 });
-  await page.getByRole('button', { name: 'Open year orbit' }).click();
-  await expect(page.getByRole('dialog', { name: 'Year orbit' }).getByText('Week 46', { exact: true })).toBeVisible();
-  await settle(page); await shot(page, '15-orbit'); await audit(page, 'Orbit');
-  await page.getByRole('dialog').getByRole('button', { name: 'Close' }).click();
+  // ---- Settings ----
+  await m.getByRole('button', { name: 'Settings' }).click();
+  const set = page.getByRole('dialog', { name: 'Settings' });
+  await expect(set.getByTestId('migration')).toContainText('Moved from v1');
+  await expect(set.getByTestId('storage')).toContainText('1 photo');
+  await expect(set).not.toContainText('Evidence');
+  await settle(page);
+  await shot(page, '15-settings');
+  // The in-app motion setting overrides the system.
+  await set.getByRole('button', { name: 'Reduced' }).click();
+  await expect(page.locator('html')).toHaveClass(/rm/);
+  await expect(page.locator('[data-nova]')).toHaveAttribute('data-nova', 'still');
+  await set.getByRole('button', { name: 'Full', exact: true }).click();
+  await expect(page.locator('html')).not.toHaveClass(/rm/);
+  await expect(page.locator('[data-nova]')).toHaveAttribute('data-nova', 'live');
+  await set.getByRole('button', { name: 'Follow phone' }).click();
+  await set.getByRole('switch', { name: 'Large text' }).check();
+  await expect(page.locator('html')).toHaveClass(/lg/);
+  await set.getByRole('switch', { name: 'Large text' }).uncheck();
+  await expect(set.getByRole('switch', { name: /Haptics/ })).toBeChecked();
+  await page.keyboard.press('Escape');
+  await noDialog(page);
 
-  // Settings: migration report, and the secret token was not copied.
-  if (phone) { await tab(page, 'Today'); }
-  await page.getByRole('button', { name: 'Settings' }).click();
-  const mig = page.getByTestId('migration');
-  await expect(mig).toContainText('Moved from v1');
-  await expect(mig).toContainText('habit ticks');
-  await mig.scrollIntoViewIfNeeded(); await settle(page); await shot(page, '16-settings'); await audit(page, 'Settings');
-  const backup = await page.evaluate(() => new Promise<string>((res) => { const rq = indexedDB.open('logplan-v2'); rq.onsuccess = () => { const g = rq.result.transaction('kv').objectStore('kv').get('v1-backup'); g.onsuccess = () => res(JSON.stringify(g.result)); }; }));
-  expect(backup).toContain('app-week:2026-11-09');
-  expect(backup).not.toContain('ghp_FAKE');
-  const v1Keys = await page.evaluate(() => new Promise<number>((res) => { const rq = indexedDB.open('logplan-db'); rq.onsuccess = () => { const g = rq.result.transaction('kv').objectStore('kv').getAllKeys(); g.onsuccess = () => res(g.result.length); }; }));
-  expect(v1Keys).toBe(17); // v1 database untouched: 12 weeks + habits, countdowns, catalogue, lead, token
+  // Removed screens are gone; their tabs are not offered.
+  const nav = page.getByRole('navigation', { name: 'Sections' });
+  await expect(nav.getByRole('button')).toHaveCount(project() === 'laptop' ? 5 : 4);
+  for (const gone of ['Journal', 'Insights', 'Plan']) await expect(nav.getByRole('button', { name: gone })).toHaveCount(0);
+  await expect(page.getByText('Why this works')).toHaveCount(0);
 
-  // Reload: data persists and the migration does not run twice.
-  await page.reload();
-  await expect(page.locator('#main').getByRole('button', { name: /6\/9 blocks done/ })).toBeVisible();
-  await expect(page.getByRole('status').filter({ hasText: 'Welcome to v2' })).toHaveCount(0);
-  expect(errors, 'console errors').toEqual([]);
+  // The v1 database is still there, untouched; the token was not copied.
+  const v1 = await page.evaluate(async () => {
+    const db: IDBDatabase = await new Promise((res) => { const r = indexedDB.open('logplan-db'); r.onsuccess = () => res(r.result); });
+    const keys: string[] = await new Promise((res) => { const r = db.transaction('kv').objectStore('kv').getAllKeys(); r.onsuccess = () => res(r.result as string[]); });
+    const v2: IDBDatabase = await new Promise((res) => { const r = indexedDB.open('logplan-v2'); r.onsuccess = () => res(r.result); });
+    const backup: any = await new Promise((res) => { const r = v2.transaction('kv').objectStore('kv').get('v1-backup'); r.onsuccess = () => res(r.result); });
+    return { keys: keys.length, tokenInBackup: JSON.stringify(backup).includes('ghp_') };
+  });
+  expect(v1.keys).toBe(17);
+  expect(v1.tokenInBackup).toBe(false);
+  expect(errors).toEqual([]);
 });

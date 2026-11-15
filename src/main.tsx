@@ -22,7 +22,7 @@ async function boot() {
     const r = await runMigration();
     if (r.status === 'done' && !(await kvGet('migrationSeen', false))) {
       await kvSet('migrationSeen', true);
-      setTimeout(() => useApp.getState().say(`Welcome to v2. ${r.inserted} items moved from v1; your old data is untouched.`, { label: 'Details', run: () => useApp.getState().open('settings') }), 1200);
+      setTimeout(() => useApp.getState().say(`Welcome to Log/Plan 2. ${r.inserted} items moved from v1; your old data is untouched.`, { label: 'Details', run: () => useApp.getState().open('settings') }), 1200);
     }
   } catch (e) { console.error('migration', e); setTimeout(() => useApp.getState().say('Could not read your v1 data. It is untouched; see Settings.'), 1200); }
   await useApp.getState().load();

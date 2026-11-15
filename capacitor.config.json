@@ -2,10 +2,10 @@
   "appId": "com.hari.logplan",
   "appName": "Log/Plan",
   "webDir": "dist",
-  "backgroundColor": "#040A18",
+  "backgroundColor": "#010208",
   "android": {
     "allowMixedContent": false,
-    "backgroundColor": "#040A18"
+    "backgroundColor": "#010208"
   },
   "plugins": {
     "SystemBars": {

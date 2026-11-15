@@ -1,7 +1,7 @@
 {
   "name": "logplan-app",
-  "version": "2.0.0",
-  "description": "Log/Plan — local-first daily planner, journal and habit system",
+  "version": "2.1.0",
+  "description": "Log/Plan: local-first daily planning and tracking",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,8 +9,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173 --strictPort",
     "test": "vitest run",
-    "e2e": "playwright test app pwa import",
-    "perf": "playwright test perf --project=phone",
+    "e2e": "playwright test e2e/app.spec.ts e2e/a11y.spec.ts e2e/upgrade.spec.ts e2e/pwa.spec.ts e2e/import.spec.ts",
+    "perf": "playwright test e2e/perf.spec.ts --project=phone",
     "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android",
     "android:sync": "npm run build && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease"
@@ -37,6 +37,7 @@
     "zustand": "^5.1.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@capacitor/assets": "^4.0.0",
     "@capacitor/cli": "^8.6.2",
     "@playwright/test": "^1.65.1",

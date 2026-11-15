@@ -42,3 +42,9 @@ export function useMedia(q: string): boolean {
   useEffect(() => { const mq = matchMedia(q); const h = () => setM(mq.matches); mq.addEventListener('change', h); return () => mq.removeEventListener('change', h); }, [q]);
   return m;
 }
+/** Whether movement should be replaced by short fades (in-app setting first, then the system setting). */
+export function useReduce(): boolean {
+  const m = useApp((s) => s.settings.motion);
+  const sys = useMedia('(prefers-reduced-motion: reduce)');
+  return m === 'reduce' || (m === 'system' && sys);
+}

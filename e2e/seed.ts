@@ -3,7 +3,7 @@ import type { Page } from '@playwright/test';
  *  so every end-to-end run also exercises the real v1 → v2 migration. "Now" is fixed at Sat 14 Nov 2026, 14:20. */
 export const NOW = new Date(2026, 10, 14, 14, 20);
 export async function seedV1(page: Page, fixedClock = true) {
-  if (fixedClock) await page.clock.install({ time: NOW }); // the fake clock also fakes animation frames, so timing tests turn it off
+  if (fixedClock) await page.clock.setFixedTime(NOW); // only the date is fixed; timers and animation frames run in real time
   await page.goto('/icon.svg'); // same origin, app not running yet
   await page.evaluate(() => {
     const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
