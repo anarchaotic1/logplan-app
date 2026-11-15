@@ -1,6 +1,6 @@
 {
   "name": "logplan-app",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "Log/Plan: local-first daily planning and tracking",
   "private": true,
   "type": "module",

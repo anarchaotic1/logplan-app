@@ -10,6 +10,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // registered by hand in src/main.tsx, and only in the browser: the Android app bundles its files
       includeAssets: ['icon.svg'],
       manifest: {
         name: 'Log/Plan', short_name: 'Log/Plan', description: 'Daily planning and tracking: blocks, to-dos, meals, habits and sleep. Local-first.',

@@ -13,6 +13,21 @@ import { setNode } from './lib/hlc';
 import { kvGet, kvSet } from './lib/db';
 import { uid } from './lib/model';
 import { initSync } from './syncctl';
+import { isNative } from './lib/native';
+
+/** Browser: keep the installable, offline copy up to date and reload when a new version is ready.
+ *  Android app: the files are inside the APK, so a service worker only risks serving an old copy.
+ *  Remove any left over from an earlier version and reload once so the new files show at once. */
+async function offline() {
+  if (!('serviceWorker' in navigator)) return;
+  if (!isNative) { const { registerSW } = await import('virtual:pwa-register'); registerSW({ immediate: true }); return; }
+  const regs = await navigator.serviceWorker.getRegistrations();
+  if (!regs.length) return;
+  await Promise.all(regs.map((r) => r.unregister()));
+  if (self.caches) await Promise.all((await caches.keys()).map((k) => caches.delete(k)));
+  location.reload();
+}
+void offline();
 
 async function boot() {
   let node = await kvGet<string>('node', '');
