@@ -4,7 +4,7 @@ import { onPulse } from '../fx';
 import { useMedia, useReduce } from '../hooks';
 import { useApp } from '../store';
 
-const FPS = 30, SLOW_MS = 60, SLOW_FRAMES = 45;
+const FPS = 30, SLOW_MS = 60, SLOW_FRAMES = 15; // about a second of slow frames in a row, then a still frame
 type Mode = 'live' | 'still' | 'css';
 /** Core position as a fraction of the screen: off-centre, upper right. */
 const corePos = (wide: boolean) => (wide ? [0.6, 0.3] : [0.78, 0.2]);
