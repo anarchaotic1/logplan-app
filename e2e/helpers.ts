@@ -18,7 +18,7 @@ export async function start(page: Page, fixedClock = true) {
   page.on('response', (r) => { if (r.status() >= 400) errors.push(`${r.status()} ${r.url()}`); });
   await seedV1(page, fixedClock);
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1 })).toContainText('Good afternoon');
+  await expect(page.getByRole('heading', { level: 1 })).toContainText(fixedClock ? 'Good afternoon' : /Good (morning|afternoon|evening)/);
   await expect(page.getByText('Welcome to Log/Plan 2')).toBeVisible();
   await expect(page.getByText('Welcome to Log/Plan 2')).toBeHidden({ timeout: 12000 });
   await main(page).getByRole('button', { name: 'Dismiss' }).click();

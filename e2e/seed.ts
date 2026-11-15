@@ -1,7 +1,7 @@
 import type { Page } from '@playwright/test';
 /** Writes a realistic v1 database (the exact shapes v1 stored) into the browser before the app starts,
  *  so every end-to-end run also exercises the real v1 → v2 migration. "Now" is fixed at Sat 14 Nov 2026, 14:20. */
-export const NOW = new Date(2026, 10, 14, 14, 20);
+export const NOW = new Date('2026-11-14T14:20:00+05:30'); // the tests run in the Asia/Kolkata time zone (playwright.config.ts)
 export async function seedV1(page: Page, fixedClock = true) {
   if (fixedClock) await page.clock.setFixedTime(NOW); // only the date is fixed; timers and animation frames run in real time
   await page.goto('/icon.svg'); // same origin, app not running yet

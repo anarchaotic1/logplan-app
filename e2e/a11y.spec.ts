@@ -1,7 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { isPhone, main, pngBuffer, project, reduced, settle, start, tab } from './helpers';
-import { LUMA_CAP } from '../src/lib/nova';
 
 /** Accessibility checks on every screen: axe (WCAG 2.2 A and AA rules; serious and critical findings fail),
  *  48 px touch targets, 12 px minimum text, visible focus, focus trapping, reflow at 200% text and at 400% zoom,
@@ -52,6 +51,10 @@ test('every screen passes axe, target-size, text-size and structure checks', asy
   await start(page);
   const m = main(page);
   await check(page, 'Today');
+  await m.getByRole('button', { name: /^Start a focus timer for / }).click();
+  await expect(page.getByRole('dialog', { name: /^Focus on / })).toBeVisible();
+  await check(page, 'Eclipse focus');
+  await page.getByRole('dialog').getByRole('button', { name: 'End focus' }).click();
   await m.getByRole('button', { name: 'Log sleep' }).click();
   await expect(m.getByRole('slider', { name: 'Bedtime' })).toBeVisible();
   await m.getByRole('slider', { name: 'Bedtime' }).scrollIntoViewIfNeeded();
@@ -79,6 +82,8 @@ test('every screen passes axe, target-size, text-size and structure checks', asy
   await check(page, 'Search results');
   await m.getByRole('button', { name: 'Clear search' }).click();
   await m.getByRole('button', { name: /^Friday 13 November\./ }).click();
+  await check(page, 'Calendar month with a day card');
+  await m.getByRole('button', { name: 'Open this day' }).click();
   await check(page, 'Calendar day');
   await m.getByRole('button', { name: 'Back to the month' }).click();
   await m.getByRole('button', { name: 'Setup' }).click();
@@ -90,17 +95,28 @@ test('every screen passes axe, target-size, text-size and structure checks', asy
   await page.keyboard.press('Escape');
 
   await tab(page, 'Meals');
-  const meal = m.getByRole('region', { name: /^Dal rice/ });
+  await check(page, 'Meals, macros face');
+  await m.getByRole('button', { name: 'Flip to horizon view' }).click();
+  await check(page, 'Meals, horizon face');
+  await m.getByRole('button', { name: /^Add (breakfast|lunch|dinner|snack|meal)$/ }).click();
+  await check(page, 'Meals, add form');
+  await m.getByRole('button', { name: /^Dal rice / }).click();
+  const meal = page.getByRole('dialog', { name: /^Dal rice, / });
   await meal.getByLabel('Choose photos for Dal rice').setInputFiles({ name: 'a.png', mimeType: 'image/png', buffer: await pngBuffer(page, 800, 600) });
   await expect(meal.getByRole('button', { name: /Photo 1/ }).locator('img')).toBeVisible();
-  await check(page, 'Meals');
+  await check(page, 'Meal, full screen');
+  await meal.getByRole('button', { name: 'Close', exact: true }).scrollIntoViewIfNeeded();
+  await check(page, 'Meal, full screen, lower part');
   await meal.getByRole('button', { name: /Photo 1/ }).click();
   await check(page, 'Photo viewer');
   await page.keyboard.press('Escape');
+  await page.keyboard.press('Escape');
 
   await tab(page, 'Habits');
-  await m.getByRole('button', { name: /^Gym details/ }).click();
   await check(page, 'Habits');
+  await m.getByRole('button', { name: /^Gym history/ }).click();
+  await check(page, 'Habit history');
+  await page.keyboard.press('Escape');
   await page.getByRole('button', { name: 'Add habit' }).click();
   await check(page, 'Habit sheet');
   await page.keyboard.press('Escape');
@@ -108,6 +124,9 @@ test('every screen passes axe, target-size, text-size and structure checks', asy
   await tab(page, 'Today');
   await m.getByRole('button', { name: 'Settings' }).click();
   await check(page, 'Settings');
+  await page.getByRole('dialog').getByRole('button', { name: 'Manual' }).click();
+  await page.getByRole('dialog').getByRole('switch', { name: 'Show calories' }).scrollIntoViewIfNeeded();
+  await check(page, 'Settings, sky and meals');
   await page.getByRole('dialog').getByRole('button', { name: 'Export encrypted' }).scrollIntoViewIfNeeded();
   await check(page, 'Settings, data section');
   expect(found).toEqual([]);
@@ -151,7 +170,7 @@ test('keyboard: visible focus, sheets trap focus and give it back, Escape closes
 
 test('layout survives 200% text and 400% zoom without sideways scrolling or clipped controls', async ({ page }) => {
   test.skip(project() !== 'phone', 'checked at phone size');
-  test.setTimeout(120000);
+  test.setTimeout(240000);
   await start(page);
   const m = main(page);
   const overflow = () => page.evaluate(() => {
@@ -178,8 +197,24 @@ test('layout survives 200% text and 400% zoom without sideways scrolling or clip
     expect(await overflow(), `${label}: block sheet`).toEqual([]);
     await page.keyboard.press('Escape');
     await m.getByRole('button', { name: 'Settings' }).click(); await settle(page, 500);
+    await page.getByRole('dialog').getByRole('button', { name: 'Manual' }).click();
     expect(await overflow(), `${label}: settings`).toEqual([]);
+    await page.getByRole('dialog').getByRole('button', { name: 'Bengaluru' }).click();
     await page.keyboard.press('Escape'); await settle(page, 400);
+    // New in 2.2: the eclipse focus screen, the meal opened full screen, the habit history sheet.
+    await m.getByRole('button', { name: /^Start a focus timer for / }).click(); await settle(page, 600);
+    expect(await overflow(), `${label}: eclipse focus`).toEqual([]);
+    await page.getByRole('dialog').getByRole('button', { name: 'End focus' }).click();
+    await tab(page, 'Meals'); await m.getByRole('button', { name: 'Flip to horizon view' }).click(); await settle(page, 500);
+    expect(await overflow(), `${label}: Meals, horizon`).toEqual([]);
+    await m.getByRole('button', { name: 'Flip to macros' }).click();
+    await m.getByRole('button', { name: /^Dal rice / }).click(); await settle(page, 700);
+    expect(await overflow(), `${label}: meal open`).toEqual([]);
+    await page.keyboard.press('Escape');
+    await tab(page, 'Habits'); await m.getByRole('button', { name: /^Gym history/ }).click(); await settle(page, 600);
+    expect(await overflow(), `${label}: habit history`).toEqual([]);
+    await page.keyboard.press('Escape'); await settle(page, 400);
+    await tab(page, 'Today');
   };
   // System font scaling to 200% (Android applies it to the WebView's text).
   await page.evaluate(() => { document.documentElement.style.fontSize = '200%'; });
@@ -192,37 +227,26 @@ test('layout survives 200% text and 400% zoom without sideways scrolling or clip
   await page.screenshot({ path: `docs/screenshots/${project()}/21-zoom-400-percent.png` });
 });
 
-test('text keeps its contrast over the brightest pixel of the background, including during a completion ring', async ({ page }) => {
-  test.skip(reduced(), 'the still frame is the same shader output');
+test('the background is flat: everything behind the content is the background colour, except nine tiny stars', async ({ page }) => {
   await start(page);
-  const m = main(page);
-  // Sample the background alone (content hidden) while idle, then right after a completion (ring and flash).
-  const maxLuma = async () => {
-    const shotB64 = (await page.screenshot()).toString('base64');
-    return page.evaluate(async (b64) => {
-      const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
-      const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
-      const g = c.getContext('2d')!; g.drawImage(bmp, 0, 0);
-      const d = g.getImageData(0, 0, c.width, c.height).data;
-      const lin = (v: number) => { const s = v / 255; return s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4; };
-      let max = 0;
-      for (let i = 0; i < d.length; i += 4) { const L = 0.2126 * lin(d[i]) + 0.7152 * lin(d[i + 1]) + 0.0722 * lin(d[i + 2]); if (L > max) max = L; }
-      return max;
-    }, shotB64);
-  };
-  const tokens = await page.evaluate(() => { const cs = getComputedStyle(document.documentElement); return { text: cs.getPropertyValue('--text').trim(), muted: cs.getPropertyValue('--muted').trim(), accent: cs.getPropertyValue('--accent').trim() }; });
+  // Content hidden, so only the background is measured. Cards, sheets and bars are opaque, so the stars can only ever sit behind
+  // text that is placed straight on the background, and a star is at most 2 CSS px wide.
   await page.addStyleTag({ content: '.shell, .toast-zone, .sparks, .cursor-dot, .cursor-ring { visibility: hidden !important }' });
-  const idle = await maxLuma();
-  const samples = [idle];
-  for (let i = 0; i < 3; i++) { await page.evaluate(() => { (document.querySelector('.check') as HTMLElement).click(); }); await page.waitForTimeout(120 + i * 140); samples.push(await maxLuma()); }
-  const worst = Math.max(...samples);
-  expect(await m.count()).toBe(1);
-  expect(worst, 'brightest background pixel (relative luminance)').toBeLessThanOrEqual(LUMA_CAP + 0.004);
-  const lum = (hex: string) => { const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((s) => (s <= 0.04045 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
-  const ratio = (fg: string) => (lum(fg) + 0.05) / (worst + 0.05);
-  test.info().annotations.push({ type: 'contrast', description: `brightest background pixel L=${worst.toFixed(4)} (idle ${idle.toFixed(4)}); text ${ratio(tokens.text).toFixed(2)}:1, muted ${ratio(tokens.muted).toFixed(2)}:1, accent ${ratio(tokens.accent).toFixed(2)}:1` });
-  console.log(`[${project()}] brightest background pixel L=${worst.toFixed(4)} (idle ${idle.toFixed(4)}); text ${ratio(tokens.text).toFixed(2)}:1, muted ${ratio(tokens.muted).toFixed(2)}:1, accent ${ratio(tokens.accent).toFixed(2)}:1`);
-  expect(ratio(tokens.text)).toBeGreaterThanOrEqual(7);
-  expect(ratio(tokens.muted)).toBeGreaterThanOrEqual(5);
-  expect(ratio(tokens.accent)).toBeGreaterThanOrEqual(4.5);
+  await page.waitForTimeout(500);
+  const shotB64 = (await page.screenshot()).toString('base64');
+  const r = await page.evaluate(async (b64) => {
+    const bmp = await createImageBitmap(await (await fetch(`data:image/png;base64,${b64}`)).blob());
+    const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    const g = c.getContext('2d')!; g.drawImage(bmp, 0, 0);
+    const d = g.getImageData(0, 0, c.width, c.height).data;
+    let off = 0;
+    for (let i = 0; i < d.length; i += 4) if (Math.abs(d[i] - 4) + Math.abs(d[i + 1] - 10) + Math.abs(d[i + 2] - 24) > 6) off++;
+    const stars = [...document.querySelectorAll('.sky-bg i')].map((el) => el.getBoundingClientRect().width);
+    return { share: off / (d.length / 4), stars, canvases: document.querySelectorAll('canvas').length };
+  }, shotB64);
+  console.log(`[${project()}] background pixels that are not #040A18: ${(r.share * 100).toFixed(4)}% (the stars)`);
+  expect(r.share).toBeLessThan(0.0005);
+  expect(r.stars).toHaveLength(9);
+  expect(Math.max(...r.stars)).toBeLessThanOrEqual(2);
+  expect(r.canvases).toBe(0);
 });

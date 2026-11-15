@@ -5,18 +5,18 @@ import { main, start } from './helpers';
 /** Renders the real Today screen with three candidate accents and saves them side by side to docs/palette-options.png.
  *  Run with: npm run palette. The accent is one CSS token (--accent in src/styles.css); this sets it before the app starts. */
 const OPTIONS = [
-  { name: 'Ember amber', hex: '#FFB35C' },
-  { name: 'Rose coral', hex: '#FF8F7E' },
-  { name: 'Violet pink', hex: '#DDA2F2' },
+  { name: 'Original cyan', hex: '#5CE1E6' },
+  { name: 'Softer aqua', hex: '#7FE3D2' },
+  { name: 'Sky blue', hex: '#8FD3FF' },
 ];
 test('accent candidates on the real Today screen', async ({ browser }) => {
   test.skip(test.info().project.name !== 'phone', 'rendered once, at phone size');
   test.setTimeout(180000);
   const shots: string[] = [];
   for (const o of OPTIONS) {
-    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block' });
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true, isMobile: true, serviceWorkers: 'block', timezoneId: 'Asia/Kolkata' });
     const page = await ctx.newPage();
-    await page.addInitScript((hex) => { (window as any).__LP_BG = 'still'; const set = () => document.documentElement?.style.setProperty('--accent', hex); set(); new MutationObserver(set).observe(document, { childList: true }); document.addEventListener('DOMContentLoaded', set); }, o.hex);
+    await page.addInitScript((hex) => { const set = () => document.documentElement?.style.setProperty('--accent', hex); set(); new MutationObserver(set).observe(document, { childList: true }); document.addEventListener('DOMContentLoaded', set); }, o.hex);
     await start(page);
     await main(page).evaluate((el) => el.scrollTo({ top: 0 }));
     await page.waitForTimeout(1500);
