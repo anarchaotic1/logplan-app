@@ -1,6 +1,6 @@
 {
   "name": "logplan-app",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Log/Plan: local-first daily planning and tracking",
   "private": true,
   "type": "module",
@@ -13,7 +13,7 @@
     "perf": "playwright test e2e/perf.spec.ts --project=phone",
     "palette": "playwright test e2e/palette.spec.ts --project=phone",
     "assets": "node scripts/make-assets.mjs && capacitor-assets generate --android",
-    "android:sync": "npm run build && cap sync android",
+    "android:sync": "npm run build && node scripts/native-sw.mjs && cap sync android",
     "android:apk": "npm run android:sync && cd android && ./gradlew assembleRelease"
   },
   "dependencies": {

@@ -39,6 +39,8 @@ jobs:
         with: { distribution: temurin, java-version: 21 }
       - run: npm ci
       - run: npm run build
+      - name: Android build carries its own files, so no offline copy of its own
+        run: node scripts/native-sw.mjs
       - run: npx cap sync android
       - name: Restore the fixed signing key
         env:
